@@ -1,0 +1,1951 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="h-full dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FreshCheck — Controle Inteligente de Alimentos</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        cyber: {
+                            bg: '#0B0F17',
+                            card: '#121824',
+                            border: '#1E293B',
+                            neon: '#00E676',
+                            teal: '#00E5FF',
+                            warning: '#FFB300',
+                            danger: '#FF1744',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Plus Jakarta Sans', 'Inter', 'sans-serif'],
+                    },
+                    boxShadow: {
+                        'neon-green': '0 0 20px rgba(0, 230, 118, 0.35)',
+                        'neon-teal': '0 0 20px rgba(0, 229, 255, 0.35)',
+                        'neon-danger': '0 0 20px rgba(255, 23, 68, 0.35)',
+                        'neon-warning': '0 0 20px rgba(255, 179, 0, 0.35)',
+                        'glass': '0 8px 32px 0 rgba(0, 0, 0, 0.45)',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Html5-QRCode Scanner Library (Real Camera Barcode Reader) -->
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #0B0F17;
+            color: #F1F5F9;
+        }
+
+        /* Custom Glassmorphism Styling */
+        .glass-panel {
+            background: rgba(18, 24, 36, 0.85);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .glass-card {
+            background: rgba(30, 41, 59, 0.45);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.07);
+        }
+
+        .glass-input {
+            background: rgba(11, 15, 23, 0.85);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+        }
+
+        .glass-input:focus {
+            border-color: #00E676;
+            box-shadow: 0 0 14px rgba(0, 230, 118, 0.3);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0B0F17;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #1E293B;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #00E676;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col bg-[#0B0F17] text-slate-100 antialiased selection:bg-emerald-500 selection:text-black">
+
+    <!-- TOP HEADER / NAV BAR -->
+    <header class="sticky top-0 z-40 glass-panel border-b border-slate-800/80">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-20">
+                
+                <!-- Logo & Brand Header -->
+                <div class="flex items-center space-x-3 cursor-pointer" onclick="playAudio('beep'); resetFilters();">
+                    <div class="relative group">
+                        <div class="absolute -inset-1 bg-gradient-to-r from-emerald-400 to-cyan-400 rounded-2xl blur opacity-70 group-hover:opacity-100 transition duration-300"></div>
+                        <div class="relative w-12 h-12 bg-slate-950 rounded-2xl flex items-center justify-center border border-emerald-500/30">
+                            <!-- High-Tech SVG Logo -->
+                            <svg class="w-8 h-8" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M50 15C30 15 15 30 15 50C15 70 30 85 50 85C70 85 85 70 85 50" stroke="url(#grad1)" stroke-width="7" stroke-linecap="round"/>
+                                <circle cx="50" cy="50" r="24" stroke="#00E5FF" stroke-width="4" stroke-dasharray="4 4"/>
+                                <path d="M40 50L47 57L63 41" stroke="#00E676" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M50 20C65 20 78 30 82 45" stroke="#00E676" stroke-width="4" stroke-linecap="round"/>
+                                <defs>
+                                    <linearGradient id="grad1" x1="15" y1="15" x2="85" y2="85" gradientUnits="userSpaceOnUse">
+                                        <stop stop-color="#00E676"/>
+                                        <stop offset="1" stop-color="#00E5FF"/>
+                                    </linearGradient>
+                                </defs>
+                            </svg>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="flex items-center space-x-2">
+                            <span class="text-2xl font-extrabold tracking-tight text-white">Fresh<span class="text-emerald-400">Check</span></span>
+                            <span class="px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 rounded-full">v3.5 Alert</span>
+                        </div>
+                        <p class="text-xs text-slate-400 font-medium hidden sm:block">Controle Inteligente de Alimentos & Validade</p>
+                    </div>
+                </div>
+
+                <!-- Action Controls -->
+                <div class="flex items-center space-x-3">
+                    
+                    <!-- Notification Bell & Drawer Trigger -->
+                    <button onclick="toggleNotificationDrawer()" id="notif-bell-btn" class="relative p-2.5 rounded-xl glass-card text-slate-300 hover:text-amber-400 hover:border-amber-500/40 transition" title="Central de Notificações de Validade">
+                        <i class="fa-solid fa-bell text-sm"></i>
+                        <span id="notif-badge" class="hidden absolute -top-1 -right-1 w-5 h-5 bg-rose-500 text-slate-950 text-[10px] font-black rounded-full flex items-center justify-center shadow-neon-danger animate-pulse">0</span>
+                    </button>
+
+                    <!-- System Web Notifications Toggle -->
+                    <button onclick="requestBrowserNotifications()" id="push-btn" class="hidden sm:inline-flex items-center space-x-1.5 px-3 py-2 rounded-xl glass-card text-xs font-semibold text-amber-400 hover:bg-amber-500/10 border border-amber-500/30 transition" title="Ativar Alertas do Navegador">
+                        <i class="fa-solid fa-bell-slash text-xs" id="push-icon"></i>
+                        <span id="push-text">Ativar Push</span>
+                    </button>
+
+                    <!-- Sound Effects Button -->
+                    <button onclick="toggleAudio()" id="audio-btn" class="p-2.5 rounded-xl glass-card text-slate-300 hover:text-emerald-400 hover:border-emerald-500/40 transition" title="Alternar Efeitos Sonoros">
+                        <i class="fa-solid fa-volume-high text-sm"></i>
+                    </button>
+
+                    <!-- Cloud Sync (Premium Feature) -->
+                    <button onclick="requirePremium('Sincronização em Nuvem')" class="hidden lg:inline-flex items-center space-x-1.5 px-3 py-2 rounded-xl glass-card text-xs font-semibold text-slate-400 hover:text-cyan-400 border border-slate-700 hover:border-cyan-500/40 transition" title="Sincronização em Nuvem (Premium)">
+                        <i class="fa-solid fa-cloud text-xs"></i>
+                        <i class="fa-solid fa-lock text-[9px] text-amber-500"></i>
+                    </button>
+
+                    <!-- Upgrade / Premium Button -->
+                    <button onclick="openUpgradeModal()" class="inline-flex items-center space-x-2 px-3 py-2 rounded-xl bg-gradient-to-r from-amber-500/20 to-orange-500/20 text-xs font-bold text-amber-400 hover:from-amber-500/30 hover:to-orange-500/30 border border-amber-500/50 shadow-neon-warning transition">
+                        <i class="fa-solid fa-crown text-sm"></i>
+                        <span class="hidden sm:inline">Premium</span>
+                    </button>
+
+                    <!-- Real Camera Barcode Scanner -->
+                    <button onclick="openCameraScanner()" class="inline-flex items-center space-x-2 px-3.5 py-2 rounded-xl glass-card text-xs font-semibold text-cyan-400 hover:bg-cyan-500/10 border border-cyan-500/30 transition">
+                        <i class="fa-solid fa-camera text-sm"></i>
+                        <span>Scan IA Barcode</span>
+                    </button>
+
+                    <!-- Add New Item Modal Opener -->
+                    <button onclick="openModal()" class="relative group px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm text-slate-950 bg-gradient-to-r from-emerald-400 to-cyan-400 hover:from-emerald-300 hover:to-cyan-300 shadow-neon-green transition duration-200 flex items-center space-x-2">
+                        <i class="fa-solid fa-plus text-sm"></i>
+                        <span>Novo Alimento</span>
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    </header>
+
+    <!-- CRITICAL ALERTS BANNER (EXPIRING / SPOILED) -->
+    <div id="critical-alert-banner" class="hidden bg-gradient-to-r from-rose-950/90 via-amber-950/80 to-rose-950/90 border-b border-rose-500/50 px-4 py-3 text-white">
+        <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+            <div class="flex items-center space-x-3">
+                <span class="w-8 h-8 rounded-xl bg-rose-500/20 border border-rose-500/40 text-rose-400 flex items-center justify-center shrink-0 animate-bounce">
+                    <i class="fa-solid fa-triangle-exclamation text-base"></i>
+                </span>
+                <div>
+                    <strong class="text-rose-400 font-bold uppercase tracking-wider">Atenção! Alimentos em risco detectados:</strong>
+                    <span id="critical-alert-text" class="text-slate-200 ml-1">Existem alimentos estragados ou prestes a vencer no seu inventário!</span>
+                </div>
+            </div>
+            <div class="flex items-center space-x-2">
+                <button onclick="filterStatusDirect('urgent');" class="px-3 py-1.5 bg-rose-500 hover:bg-rose-400 text-slate-950 font-bold rounded-lg transition text-xs shadow-neon-danger">
+                    <i class="fa-solid fa-filter mr-1"></i> Ver Críticos
+                </button>
+                <button onclick="toggleNotificationDrawer()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold rounded-lg transition text-xs border border-slate-700">
+                    Ver Notificações
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- NOTIFICATION DRAWER / CENTRAL DE ALERTAS -->
+    <div id="notif-drawer" class="fixed top-0 right-0 h-full w-full sm:w-96 bg-slate-950/95 border-l border-slate-800 backdrop-blur-xl z-50 transform translate-x-full transition-transform duration-300 flex flex-col shadow-2xl">
+        <div class="p-5 border-b border-slate-800 flex items-center justify-between bg-slate-900/60">
+            <div class="flex items-center space-x-2.5 text-amber-400">
+                <i class="fa-solid fa-bell text-base"></i>
+                <h3 class="font-bold text-sm uppercase tracking-wider text-white">Central de Alertas</h3>
+            </div>
+            <button onclick="toggleNotificationDrawer()" class="text-slate-400 hover:text-white p-2 rounded-xl hover:bg-slate-800 transition">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+        </div>
+
+        <div class="p-4 border-b border-slate-800/80 bg-slate-900/30 flex items-center justify-between text-xs text-slate-400">
+            <span>Status das Notificações Push:</span>
+            <span id="push-status-label" class="font-bold text-rose-400">Inativo</span>
+        </div>
+
+        <div id="notif-list-container" class="flex-1 overflow-y-auto p-4 space-y-3">
+            <!-- Dynamic Notification Alerts rendered here -->
+        </div>
+
+        <div class="p-4 border-t border-slate-800 bg-slate-900/50">
+            <button onclick="checkAndTriggerSystemNotifications(true)" class="w-full py-2.5 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 font-bold text-xs rounded-xl transition flex items-center justify-center space-x-2">
+                <i class="fa-solid fa-rotate-right"></i>
+                <span>Reverificar Alertas Agora</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- DASHBOARD CONTAINER -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+
+        <!-- STATS COUNTERS -->
+        <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            
+            <!-- Metric 1: Total Items -->
+            <div class="glass-panel rounded-2xl p-5 relative overflow-hidden group hover:border-emerald-500/50 transition duration-300">
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Total no Estoque</span>
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+                </div>
+                <div class="mt-3 flex items-baseline space-x-2">
+                    <span class="text-3xl font-extrabold text-white" id="stat-total">0</span>
+                    <span class="text-xs text-slate-400">itens armazenados</span>
+                </div>
+                <div class="mt-3 pt-3 border-t border-slate-800/80 text-[11px] text-slate-400 flex items-center justify-between">
+                    <span>Monitoramento Ativo</span>
+                    <i class="fa-solid fa-microchip text-emerald-400"></i>
+                </div>
+            </div>
+
+            <!-- Metric 2: Safe Items -->
+            <div class="glass-panel rounded-2xl p-5 relative overflow-hidden group hover:border-emerald-500/50 transition duration-300">
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-bold uppercase tracking-wider text-emerald-400">Saudável</span>
+                    <i class="fa-solid fa-shield-halved text-emerald-400 text-sm"></i>
+                </div>
+                <div class="mt-3 flex items-baseline space-x-2">
+                    <span class="text-3xl font-extrabold text-emerald-400" id="stat-safe">0</span>
+                    <span class="text-xs text-slate-400">válidos (> 7 dias)</span>
+                </div>
+                <div class="mt-3 pt-3 border-t border-slate-800/80 text-[11px] text-emerald-400/80 font-medium">
+                    <i class="fa-solid fa-circle-check mr-1"></i> Seguro para consumo
+                </div>
+            </div>
+
+            <!-- Metric 3: Warning Items -->
+            <div class="glass-panel rounded-2xl p-5 relative overflow-hidden group hover:border-amber-500/50 transition duration-300">
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-bold uppercase tracking-wider text-amber-400">Atenção Breve</span>
+                    <i class="fa-solid fa-triangle-exclamation text-amber-400 text-sm"></i>
+                </div>
+                <div class="mt-3 flex items-baseline space-x-2">
+                    <span class="text-3xl font-extrabold text-amber-400" id="stat-warning">0</span>
+                    <span class="text-xs text-slate-400">vencem em 3-7 dias</span>
+                </div>
+                <div class="mt-3 pt-3 border-t border-slate-800/80 text-[11px] text-amber-400/80 font-medium">
+                    <i class="fa-solid fa-clock mr-1"></i> Priorizar preparo
+                </div>
+            </div>
+
+            <!-- Metric 4: Urgent / Expired Items -->
+            <div class="glass-panel rounded-2xl p-5 relative overflow-hidden group hover:border-rose-500/50 transition duration-300">
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-bold uppercase tracking-wider text-rose-400">Crítico / Expirado</span>
+                    <i class="fa-solid fa-biohazard text-rose-400 text-sm"></i>
+                </div>
+                <div class="mt-3 flex items-baseline space-x-2">
+                    <span class="text-3xl font-extrabold text-rose-500" id="stat-urgent">0</span>
+                    <span class="text-xs text-slate-400">≤ 2 dias ou vencidos</span>
+                </div>
+                <div class="mt-3 pt-3 border-t border-slate-800/80 text-[11px] text-rose-400/80 font-medium">
+                    <i class="fa-solid fa-fire-flame-curved mr-1"></i> Ação imediata necessária
+                </div>
+            </div>
+
+        </section>
+
+        <!-- AI INSIGHTS & CHART METRICS PANEL -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            
+            <!-- AI Recommendation Assistant Box -->
+            <div class="glass-panel rounded-2xl p-6 relative overflow-hidden flex flex-col justify-between border border-cyan-500/30">
+                <div class="absolute -right-6 -top-6 w-24 h-24 bg-cyan-500/10 rounded-full blur-xl pointer-events-none"></div>
+                <div>
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center space-x-2">
+                            <span class="w-7 h-7 rounded-lg bg-cyan-500/20 text-cyan-400 flex items-center justify-center text-xs">
+                                <i class="fa-solid fa-brain"></i>
+                            </span>
+                            <h3 class="font-bold text-sm uppercase tracking-wider text-white">Assistente IA FreshCheck</h3>
+                        </div>
+                        <span class="px-2 py-0.5 text-[10px] bg-cyan-500/10 text-cyan-300 rounded font-mono border border-cyan-500/20">LIVE AI</span>
+                    </div>
+                    
+                    <div id="ai-insight-content" class="space-y-3">
+                        <!-- Dynamic AI Message -->
+                    </div>
+                </div>
+
+                <div class="mt-5 pt-4 border-t border-slate-800 flex items-center justify-between">
+                    <span class="text-xs text-slate-400" id="saved-economy-text">Economia estimada: <strong class="text-emerald-400">R$ 0,00</strong></span>
+                    <button onclick="generateAIRecipe()" class="text-xs text-cyan-400 font-bold hover:underline flex items-center space-x-1">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i>
+                        <span>Sugerir Receita</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Dynamic Interactive Chart -->
+            <div class="glass-panel rounded-2xl p-6 lg:col-span-2 flex flex-col justify-between">
+                <div class="flex items-center justify-between mb-2">
+                    <h3 class="font-bold text-sm uppercase tracking-wider text-slate-300 flex items-center space-x-2">
+                        <i class="fa-solid fa-chart-pie text-emerald-400"></i>
+                        <span>Distribuição de Validades</span>
+                    </h3>
+                    <button onclick="toggleChartType()" class="text-xs px-2.5 py-1 bg-slate-800 text-slate-300 rounded-lg hover:bg-slate-700 transition">
+                        <i class="fa-solid fa-repeat text-[10px] mr-1"></i> Alternar Gráfico
+                    </button>
+                </div>
+
+                <div class="relative h-44 w-full flex items-center justify-center">
+                    <canvas id="inventoryChart"></canvas>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- MAIN TABLE & SEARCH TOOLBAR -->
+        <section class="glass-panel rounded-2xl overflow-hidden border border-slate-800">
+            
+            <!-- Filters & Search Toolbar -->
+            <div class="p-5 border-b border-slate-800 space-y-4">
+                
+                <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                    
+                    <!-- Search Input -->
+                    <div class="relative flex-1">
+                        <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 text-sm"></i>
+                        <input type="text" id="search-input" placeholder="Buscar alimento por nome ou código..." 
+                            class="w-full pl-11 pr-4 py-2.5 glass-input rounded-xl text-sm text-slate-100 placeholder-slate-500 focus:outline-none transition">
+                    </div>
+
+                    <!-- Category & Status Filters -->
+                    <div class="flex flex-wrap items-center gap-2">
+                        
+                        <select id="filter-status" class="px-3.5 py-2.5 glass-input rounded-xl text-xs sm:text-sm text-slate-300 focus:outline-none">
+                            <option value="all">Todos os Status</option>
+                            <option value="urgent">🔴 Estragados / Críticos (≤ 2d)</option>
+                            <option value="warning">🟡 Pré-Estragados (3 a 7d)</option>
+                            <option value="safe">🟢 Frescos (> 7d)</option>
+                        </select>
+
+                        <select id="filter-category" class="px-3.5 py-2.5 glass-input rounded-xl text-xs sm:text-sm text-slate-300 focus:outline-none">
+                            <option value="all">Todas as Categorias</option>
+                            <option value="Frutas/Legumes">Frutas & Legumes</option>
+                            <option value="Lacticínios">Lacticínios</option>
+                            <option value="Carnes/Peixes">Carnes & Peixes</option>
+                            <option value="Bebidas">Bebidas</option>
+                            <option value="Grãos/Sobremesas">Grãos & Sobremesas</option>
+                            <option value="Outros">Outros</option>
+                        </select>
+
+                        <select id="filter-location" class="px-3.5 py-2.5 glass-input rounded-xl text-xs sm:text-sm text-slate-300 focus:outline-none">
+                            <option value="all">Todos os Locais</option>
+                            <option value="Frigorífico">Frigorífico</option>
+                            <option value="Congelador">Congelador</option>
+                            <option value="Despensa">Despensa</option>
+                        </select>
+
+                        <!-- Export Button (Premium) -->
+                        <button onclick="requirePremium('Exportar Relatório PDF/Excel')" class="px-3.5 py-2.5 glass-input rounded-xl text-xs sm:text-sm text-slate-300 hover:text-cyan-400 hover:border-cyan-500 transition focus:outline-none flex items-center space-x-1.5" title="Exportar Inventário para PDF/Excel">
+                            <i class="fa-solid fa-file-export"></i>
+                            <i class="fa-solid fa-lock text-[9px] text-amber-500"></i>
+                        </button>
+
+                        <!-- View Toggle Buttons -->
+                        <div class="flex items-center bg-slate-900 border border-slate-800 rounded-xl p-1">
+                            <button id="view-table-btn" onclick="setViewMode('table')" class="px-2.5 py-1.5 rounded-lg text-xs text-emerald-400 bg-slate-800 transition">
+                                <i class="fa-solid fa-list"></i>
+                            </button>
+                            <button id="view-grid-btn" onclick="setViewMode('grid')" class="px-2.5 py-1.5 rounded-lg text-xs text-slate-400 hover:text-white transition">
+                                <i class="fa-solid fa-border-all"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Batch Selection Toolbar -->
+                <div id="batch-bar" class="hidden flex items-center justify-between bg-emerald-950/40 border border-emerald-500/30 px-4 py-2.5 rounded-xl text-xs text-emerald-300">
+                    <div class="flex items-center space-x-2">
+                        <i class="fa-solid fa-square-check text-emerald-400"></i>
+                        <span id="batch-count-text">0 itens selecionados</span>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <button onclick="batchConsume()" class="px-3 py-1 bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold rounded-lg transition">
+                            <i class="fa-solid fa-utensils mr-1"></i> Consumir Selecionados
+                        </button>
+                        <button onclick="batchDelete()" class="px-3 py-1 bg-rose-600 hover:bg-rose-500 text-white font-bold rounded-lg transition">
+                            <i class="fa-solid fa-trash mr-1"></i> Excluir Selecionados
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Table View Container -->
+            <div id="table-view-container" class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="border-b border-slate-800 text-slate-400 text-[11px] font-bold uppercase tracking-wider bg-slate-950/40">
+                            <th class="py-4 px-4 w-10">
+                                <input type="checkbox" id="select-all-checkbox" onclick="toggleSelectAll()" class="rounded border-slate-700 bg-slate-900 text-emerald-500 focus:ring-emerald-500">
+                            </th>
+                            <th class="py-4 px-4">Alimento</th>
+                            <th class="py-4 px-4">Categoria</th>
+                            <th class="py-4 px-4">Local</th>
+                            <th class="py-4 px-4">Qtd. Estoque</th>
+                            <th class="py-4 px-4">Validade</th>
+                            <th class="py-4 px-4">Status</th>
+                            <th class="py-4 px-6 text-right">Ações Rápidas</th>
+                        </tr>
+                    </thead>
+                    <tbody id="food-list-tbody" class="divide-y divide-slate-800/60 text-sm">
+                        <!-- Dynamic items rendered here -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Grid View Container -->
+            <div id="grid-view-container" class="hidden p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <!-- Dynamic grid items rendered here -->
+            </div>
+
+            <!-- EMPTY STATE GRAPHIC CARD -->
+            <div id="empty-state" class="py-16 text-center px-4">
+                <div class="w-20 h-20 bg-slate-900/90 text-slate-600 border border-slate-800 rounded-3xl flex items-center justify-center mx-auto mb-4 text-3xl shadow-inner">
+                    <i class="fa-solid fa-basket-shopping text-emerald-500/40"></i>
+                </div>
+                <h4 class="text-slate-200 font-bold text-lg mb-1">Nenhum Alimento Cadastrado</h4>
+                <p class="text-slate-400 text-xs max-w-md mx-auto mb-6">Seu inventário inteligente está limpo. Registre os alimentos guardados na sua geladeira ou despensa para controlar a validade.</p>
+                <div class="flex items-center justify-center space-x-3">
+                    <button onclick="openCameraScanner()" class="px-4 py-2.5 bg-slate-900 hover:bg-slate-800 text-cyan-400 font-bold text-xs rounded-xl border border-cyan-500/30 transition">
+                        <i class="fa-solid fa-camera mr-1.5"></i> Escanear Código
+                    </button>
+                    <button onclick="openModal()" class="px-4 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs rounded-xl shadow-neon-green transition">
+                        <i class="fa-solid fa-plus mr-1.5"></i> Cadastrar Alimento
+                    </button>
+                </div>
+            </div>
+
+        </section>
+
+    </main>
+
+    <!-- MODAL: REAL CAMERA BARCODE SCANNER -->
+    <div id="scanner-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/90 backdrop-blur-md opacity-0 pointer-events-none transition-all duration-300">
+        <div class="glass-panel border border-cyan-500/50 rounded-3xl shadow-neon-teal w-full max-w-md mx-4 overflow-hidden transform scale-95 transition-all duration-300" id="scanner-modal-box">
+            
+            <!-- Modal Header -->
+            <div class="px-6 py-4 border-b border-slate-800 flex items-center justify-between bg-slate-900/80">
+                <div class="flex items-center space-x-2.5">
+                    <div class="w-9 h-9 rounded-xl bg-cyan-500/20 border border-cyan-500/40 text-cyan-400 flex items-center justify-center animate-pulse">
+                        <i class="fa-solid fa-barcode text-base"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-bold text-white uppercase tracking-wider">Scanner Óptico IA</h3>
+                        <p class="text-[11px] text-slate-400">Aponte a câmara para o código de barras</p>
+                    </div>
+                </div>
+                <button onclick="closeCameraScanner()" class="text-slate-400 hover:text-white p-2 rounded-xl hover:bg-slate-800 transition">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <!-- Camera Viewfinder -->
+            <div class="p-5 flex flex-col items-center space-y-4">
+                <div class="relative w-full rounded-2xl overflow-hidden bg-black border-2 border-cyan-500/40 shadow-inner min-h-[260px] flex items-center justify-center">
+                    <div id="qr-reader" class="w-full"></div>
+                    <div id="scanner-loading" class="absolute inset-0 flex flex-col items-center justify-center bg-slate-950/90 text-cyan-400 text-xs space-y-2">
+                        <i class="fa-solid fa-spinner fa-spin text-2xl"></i>
+                        <span>A iniciar lente da câmara...</span>
+                    </div>
+                </div>
+
+                <div id="scanner-error-msg" class="hidden w-full p-3 rounded-xl bg-rose-950/60 border border-rose-500/40 text-rose-300 text-xs text-center">
+                    <!-- Error details shown if camera permission denied or unavailable -->
+                </div>
+
+                <div class="w-full flex items-center justify-between gap-2 pt-2">
+                    <button type="button" onclick="simulateScanFallback()" class="flex-1 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold rounded-xl border border-slate-700 transition">
+                        <i class="fa-solid fa-wand-magic-sparkles mr-1 text-cyan-400"></i> Simular Leitura
+                    </button>
+                    <button type="button" onclick="closeCameraScanner()" class="px-5 py-2.5 bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 text-xs font-bold rounded-xl border border-rose-500/40 transition">
+                        Fechar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: ADD / EDIT ITEM -->
+    <div id="food-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-md opacity-0 pointer-events-none transition-all duration-300">
+        <div class="glass-panel border border-slate-700/80 rounded-3xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden transform scale-95 transition-all duration-300" id="modal-box">
+            
+            <!-- Modal Header -->
+            <div class="px-6 py-5 border-b border-slate-800 flex items-center justify-between bg-slate-900/50">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 flex items-center justify-center">
+                        <i class="fa-solid fa-box-archive text-base"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-base font-bold text-white" id="modal-title">Cadastrar Novo Alimento</h3>
+                        <p class="text-xs text-slate-400">Preencha as informações do alimento armazenado</p>
+                    </div>
+                </div>
+                <button onclick="closeModal()" class="text-slate-400 hover:text-white p-2 rounded-xl hover:bg-slate-800 transition">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <!-- Form Body -->
+            <form id="food-form" onsubmit="handleFormSubmit(event)" class="p-6 space-y-4">
+                <input type="hidden" id="food-id">
+
+                <!-- Name & Barcode -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div class="sm:col-span-2">
+                        <label for="food-name" class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5">Nome do Alimento *</label>
+                        <input type="text" id="food-name" required placeholder="Ex: Leite Integral, Maçã Gala..." 
+                            class="w-full px-3.5 py-2.5 glass-input rounded-xl text-sm text-white focus:outline-none">
+                    </div>
+                    <div>
+                        <label for="food-barcode" class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5">Código Bar</label>
+                        <input type="text" id="food-barcode" placeholder="Auto" 
+                            class="w-full px-3.5 py-2.5 glass-input rounded-xl text-xs text-slate-300 font-mono focus:outline-none">
+                    </div>
+                </div>
+
+                <!-- Category & Storage -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label for="food-category" class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5">Categoria *</label>
+                        <select id="food-category" required class="w-full px-3.5 py-2.5 glass-input rounded-xl text-sm text-slate-200 focus:outline-none">
+                            <option value="Frutas/Legumes">Frutas & Legumes</option>
+                            <option value="Lacticínios">Lacticínios</option>
+                            <option value="Carnes/Peixes">Carnes & Peixes</option>
+                            <option value="Bebidas">Bebidas</option>
+                            <option value="Grãos/Sobremesas">Grãos & Sobremesas</option>
+                            <option value="Outros">Outros</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label for="food-location" class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5">Local de Guarda *</label>
+                        <select id="food-location" required class="w-full px-3.5 py-2.5 glass-input rounded-xl text-sm text-slate-200 focus:outline-none">
+                            <option value="Frigorífico">Frigorífico</option>
+                            <option value="Congelador">Congelador</option>
+                            <option value="Despensa">Despensa</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Quantity, Unit & Expiry Date -->
+                <div class="grid grid-cols-3 gap-3">
+                    <div>
+                        <label for="food-quantity" class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5">Qtd *</label>
+                        <input type="number" id="food-quantity" min="1" step="any" required value="1" 
+                            class="w-full px-3.5 py-2.5 glass-input rounded-xl text-sm text-white focus:outline-none">
+                    </div>
+
+                    <div>
+                        <label for="food-unit" class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5">Unidade</label>
+                        <select id="food-unit" class="w-full px-2.5 py-2.5 glass-input rounded-xl text-sm text-slate-200 focus:outline-none">
+                            <option value="un">un</option>
+                            <option value="kg">kg</option>
+                            <option value="g">g</option>
+                            <option value="L">L</option>
+                            <option value="ml">ml</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label for="food-expiry" class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5">Validade *</label>
+                        <input type="date" id="food-expiry" required 
+                            class="w-full px-2.5 py-2.5 glass-input rounded-xl text-xs text-white focus:outline-none">
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="pt-4 flex items-center justify-end space-x-3 border-t border-slate-800">
+                    <button type="button" onclick="closeModal()" class="px-4 py-2.5 text-xs font-bold text-slate-400 hover:text-white rounded-xl transition">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="px-5 py-2.5 bg-gradient-to-r from-emerald-400 to-cyan-400 hover:from-emerald-300 hover:to-cyan-300 text-slate-950 text-xs font-bold rounded-xl shadow-neon-green transition">
+                        Salvar Alimento
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: AI RECIPE SUGGESTION -->
+    <div id="recipe-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-md opacity-0 pointer-events-none transition-all duration-300">
+        <div class="glass-panel border border-cyan-500/40 rounded-3xl shadow-neon-teal w-full max-w-md mx-4 p-6 space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <div class="flex items-center space-x-2 text-cyan-400">
+                    <i class="fa-solid fa-utensils text-lg"></i>
+                    <h3 class="font-bold text-base text-white">Receita Anti-Desperdício IA</h3>
+                </div>
+                <button onclick="closeRecipeModal()" class="text-slate-400 hover:text-white">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <div id="recipe-content" class="text-xs text-slate-300 space-y-3 leading-relaxed">
+                <!-- AI Recipe content generated dynamically -->
+            </div>
+            <button onclick="closeRecipeModal()" class="w-full py-2.5 bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs rounded-xl transition">
+                Entendido!
+            </button>
+        </div>
+    </div>
+
+    <!-- MODAL: UPGRADE PREMIUM PLANS -->
+    <div id="upgrade-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/90 backdrop-blur-md opacity-0 pointer-events-none transition-all duration-300">
+        <div class="glass-panel border border-amber-500/50 rounded-3xl shadow-neon-warning w-full max-w-5xl mx-4 overflow-hidden transform scale-95 transition-all duration-300">
+            
+            <!-- Header -->
+            <div class="px-6 py-5 border-b border-slate-800 flex items-center justify-between bg-gradient-to-r from-amber-950/40 to-orange-950/40 relative overflow-hidden">
+                <div class="absolute -right-10 -top-10 w-40 h-40 bg-amber-500/20 rounded-full blur-3xl pointer-events-none"></div>
+                <div class="flex items-center space-x-3 relative z-10">
+                    <div class="w-12 h-12 rounded-xl bg-amber-500/20 border border-amber-500/40 text-amber-400 flex items-center justify-center text-xl shadow-neon-warning animate-pulse">
+                        <i class="fa-solid fa-crown"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-black text-white tracking-wide">Desbloqueie o FreshCheck <span class="text-amber-400">Premium</span></h3>
+                        <p class="text-xs sm:text-sm text-amber-200 mt-0.5">Pare de jogar dinheiro no lixo. O plano se paga ao salvar apenas 1 alimento por mês!</p>
+                    </div>
+                </div>
+                <button onclick="closeUpgradeModal()" class="text-slate-400 hover:text-white p-2 rounded-xl hover:bg-slate-800 transition relative z-10">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <!-- Plans Content -->
+            <div class="p-6 grid grid-cols-1 md:grid-cols-3 gap-5">
+                
+                <!-- Plan 1: Free -->
+                <div class="rounded-2xl p-6 border border-slate-700 bg-slate-900/50 flex flex-col justify-between">
+                    <div>
+                        <h4 class="text-slate-300 font-bold mb-1 text-lg">Starter (Básico)</h4>
+                        <div class="text-3xl font-black text-white mb-6">R$ 0<span class="text-sm text-slate-500 font-normal">/mês</span></div>
+                        <ul class="space-y-3 text-xs text-slate-400 font-medium">
+                            <li class="flex items-start"><i class="fa-solid fa-check text-emerald-500 mt-0.5 mr-2.5"></i> Cadastro Manual e Código de Barras</li>
+                            <li class="flex items-start"><i class="fa-solid fa-check text-emerald-500 mt-0.5 mr-2.5"></i> Painel e Gráficos Locais</li>
+                            <li class="flex items-start"><i class="fa-solid fa-check text-emerald-500 mt-0.5 mr-2.5"></i> Notificações no Navegador</li>
+                            <li class="flex items-start opacity-50"><i class="fa-solid fa-xmark text-rose-500 mt-0.5 mr-2.5"></i> Sem Backup (Perde os dados se limpar o cache)</li>
+                        </ul>
+                    </div>
+                    <button class="w-full mt-8 py-3 bg-slate-800 text-slate-500 rounded-xl text-xs font-bold cursor-not-allowed border border-slate-700">Seu Plano Atual</button>
+                </div>
+
+                <!-- Plan 2: Pro -->
+                <div class="rounded-2xl p-6 border-2 border-cyan-400 bg-gradient-to-b from-cyan-950/40 to-slate-900/80 flex flex-col justify-between shadow-neon-teal relative transform md:-translate-y-3 z-10">
+                    <div class="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-cyan-400 text-slate-950 text-[10px] sm:text-xs font-black px-4 py-1 rounded-full uppercase tracking-widest shadow-neon-teal whitespace-nowrap">O Melhor Custo-Benefício</div>
+                    <div>
+                        <h4 class="text-cyan-400 font-black mb-1 text-lg">Pro Individual</h4>
+                        <div class="flex items-baseline space-x-2 mb-1">
+                            <span class="text-slate-500 line-through text-sm font-bold">R$ 14,90</span>
+                            <span class="text-[10px] bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-md font-bold">-67% HOJE</span>
+                        </div>
+                        <div class="text-3xl font-black text-white mb-6">R$ 4,90<span class="text-sm text-cyan-500/50 font-normal">/mês</span></div>
+                        <ul class="space-y-3 text-xs text-slate-200 font-medium">
+                            <li class="flex items-start"><i class="fa-solid fa-cloud text-cyan-400 mt-0.5 mr-2.5"></i> <strong>Sincronização em Nuvem Infinita</strong></li>
+                            <li class="flex items-start"><i class="fa-solid fa-receipt text-emerald-400 mt-0.5 mr-2.5 text-sm"></i> <span class="text-emerald-300"><strong>Leitor de Cupom Fiscal:</strong> Tire foto da nota e adicione 50 itens em 3 segundos!</span></li>
+                            <li class="flex items-start"><i class="fa-solid fa-brain text-cyan-400 mt-0.5 mr-2.5"></i> <strong>Chef IA Nutricional</strong> (Receitas premium e saudáveis com o que está vencendo)</li>
+                            <li class="flex items-start"><i class="fa-solid fa-chart-line text-cyan-400 mt-0.5 mr-2.5"></i> Relatório de Economia Mensal Financeira</li>
+                        </ul>
+                    </div>
+                    <button onclick="showPixPayment('Pro Individual', 'R$ 4,90')" class="w-full mt-8 py-3 bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-400 hover:to-blue-400 text-white rounded-xl text-sm font-black transition shadow-neon-teal hover:scale-[1.02]">Assinar Pro Agora</button>
+                </div>
+
+                <!-- Plan 3: Family -->
+                <div class="rounded-2xl p-6 border border-amber-500 bg-gradient-to-b from-amber-950/20 to-slate-900/80 flex flex-col justify-between shadow-neon-warning">
+                    <div>
+                        <h4 class="text-amber-400 font-black mb-1 text-lg">Família + IoT Smart</h4>
+                        <div class="text-3xl font-black text-white mb-6">R$ 9,90<span class="text-sm text-amber-500/50 font-normal">/mês</span></div>
+                        <ul class="space-y-3 text-xs text-slate-300 font-medium">
+                            <li class="flex items-start"><i class="fa-solid fa-users text-amber-400 mt-0.5 mr-2.5"></i> Nuvem Compartilhada (Até 6 membros)</li>
+                            <li class="flex items-start"><i class="fa-brands fa-whatsapp text-emerald-400 mt-0.5 mr-2.5 text-sm"></i> <strong>Alertas de Validade no WhatsApp</strong></li>
+                            <li class="flex items-start"><i class="fa-solid fa-cart-shopping text-amber-400 mt-0.5 mr-2.5"></i> <strong>Lista de Compras Automática:</strong> O app sabe o que acabou e monta sua lista.</li>
+                            <li class="flex items-start"><i class="fa-solid fa-microchip text-amber-400 mt-0.5 mr-2.5"></i> Conexão com Hardware IoT (Geladeira Inteligente)</li>
+                        </ul>
+                    </div>
+                    <button onclick="showPixPayment('Família + IoT Smart', 'R$ 9,90')" class="w-full mt-8 py-3 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 rounded-xl text-sm font-black transition shadow-neon-warning hover:scale-[1.02]">Assinar Família Completo</button>
+                </div>
+            </div>
+            
+            <div class="px-6 pb-5 text-center">
+                <p class="text-[11px] text-slate-500 font-medium"><i class="fa-solid fa-lock text-slate-400 mr-1"></i> Pagamento único, seguro e sem fidelidade. Cancele quando quiser.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: PIX PAYMENT -->
+    <div id="pix-modal" class="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/95 backdrop-blur-md opacity-0 pointer-events-none transition-all duration-300">
+        <div class="glass-panel border border-emerald-500/50 rounded-3xl shadow-neon-green w-full max-w-sm mx-4 overflow-hidden transform scale-95 transition-all duration-300 text-center">
+            <div class="px-6 py-5 border-b border-slate-800 bg-slate-900/80 flex items-center justify-between">
+                <h3 class="text-sm font-bold text-white uppercase tracking-wider flex items-center space-x-2">
+                    <i class="fa-brands fa-pix text-emerald-400 text-lg"></i>
+                    <span>Pagamento PIX</span>
+                </h3>
+                <button onclick="closePixPayment()" class="text-slate-400 hover:text-white p-2 rounded-xl hover:bg-slate-800 transition">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            
+            <div class="p-6 space-y-4">
+                <div>
+                    <div class="text-slate-400 text-xs">Você está adquirindo:</div>
+                    <div id="pix-plan-name" class="text-lg font-black text-white">Plano</div>
+                    <div id="pix-plan-price" class="text-2xl font-black text-emerald-400 mt-1">R$ 0,00</div>
+                </div>
+
+                <div class="py-4 border-y border-slate-800/80">
+                    <div class="text-xs text-slate-400 mb-2">Chave PIX (E-mail):</div>
+                    <div class="px-3 py-2.5 bg-slate-900 border border-slate-700 rounded-xl font-mono text-xs text-emerald-300 break-all select-all">
+                        anicetolucasgabriel07@gmail.com
+                    </div>
+                </div>
+
+                <button onclick="copyPixKey()" class="w-full py-3 bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 text-slate-950 font-bold text-xs rounded-xl shadow-neon-green transition flex items-center justify-center space-x-2">
+                    <i class="fa-solid fa-copy"></i>
+                    <span>Copiar Chave PIX</span>
+                </button>
+
+                <p class="text-[10px] text-slate-500">Após o pagamento, o seu plano será ativado automaticamente num prazo de até 2 horas.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOAST NOTIFICATION -->
+    <div id="toast" class="fixed bottom-6 right-6 z-50 flex items-center space-x-3 bg-slate-900 border border-emerald-500/40 text-white px-5 py-3.5 rounded-2xl shadow-neon-green transform translate-y-20 opacity-0 transition-all duration-300 pointer-events-none">
+        <div id="toast-icon-bg" class="w-8 h-8 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
+            <i id="toast-icon" class="fa-solid fa-circle-check"></i>
+        </div>
+        <div>
+            <div id="toast-title" class="text-xs font-bold text-white">FreshCheck</div>
+            <div id="toast-message" class="text-[11px] text-slate-300">Ação concluída com sucesso.</div>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        // Storage Key
+        const STORAGE_KEY = 'freshcheck_inventory_v3';
+
+        // State Management
+        let foodItems = [];
+        let viewMode = 'table';
+        let selectedItemIds = new Set();
+        let chartType = 'doughnut';
+        let myChart = null;
+        let soundEnabled = true;
+
+        // Data Persistence Helpers
+        function loadData() {
+            try {
+                const stored = localStorage.getItem(STORAGE_KEY);
+                if (stored) {
+                    foodItems = JSON.parse(stored);
+                } else {
+                    foodItems = [];
+                }
+            } catch (e) {
+                console.error("Erro ao carregar dados do LocalStorage:", e);
+                foodItems = [];
+            }
+            renderInventory();
+        }
+
+        function saveData() {
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(foodItems));
+            } catch (e) {
+                console.error("Erro ao salvar dados no LocalStorage:", e);
+            }
+        }
+
+        // Date & Status Helpers
+        function getDaysUntilExpiry(expiryDateStr) {
+            if (!expiryDateStr) return 0;
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            const [year, month, day] = expiryDateStr.split('-').map(Number);
+            const expiry = new Date(year, month - 1, day);
+            expiry.setHours(0, 0, 0, 0);
+
+            const diffTime = expiry - today;
+            return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        }
+
+        function getItemStatus(days) {
+            if (days <= 2) return 'urgent';
+            if (days <= 7) return 'warning';
+            return 'safe';
+        }
+
+        function getOffsetDate(daysOffset) {
+            const date = new Date();
+            date.setDate(date.getDate() + daysOffset);
+            const yyyy = date.getFullYear();
+            const mm = String(date.getMonth() + 1).padStart(2, '0');
+            const dd = String(date.getDate()).padStart(2, '0');
+            return `${yyyy}-${mm}-${dd}`;
+        }
+
+        // --- NOVA INTELIGÊNCIA DE CATEGORIAS (SMART EXPIRY) ---
+        function getCategoryDefaultDays(category) {
+            switch(category) {
+                case 'Grãos/Sobremesas': return 365; // Macarrão, Arroz, Biscoitos duram meses/anos
+                case 'Bebidas': return 180;          // Sucos e refrigerantes duram meses
+                case 'Outros': return 60;
+                case 'Lacticínios': return 20;       // Leites e queijos
+                case 'Frutas/Legumes': return 10;    // Hortifruti estraga rápido
+                case 'Carnes/Peixes': return 5;      // Carnes estragam muito rápido
+                default: return 30;
+            }
+        }
+
+        function guessCategoryFromName(name) {
+            const n = name.toLowerCase();
+            if (n.includes('macarrão') || n.includes('arroz') || n.includes('feijão') || n.includes('açúcar') || n.includes('café') || n.includes('bolacha')) return 'Grãos/Sobremesas';
+            if (n.includes('leite') || n.includes('queijo') || n.includes('iogurte') || n.includes('manteiga')) return 'Lacticínios';
+            if (n.includes('carne') || n.includes('frango') || n.includes('peixe') || n.includes('salsicha')) return 'Carnes/Peixes';
+            if (n.includes('suco') || n.includes('refrigerante') || n.includes('água') || n.includes('cerveja')) return 'Bebidas';
+            if (n.includes('maçã') || n.includes('banana') || n.includes('alface') || n.includes('tomate')) return 'Frutas/Legumes';
+            return 'Outros';
+        }
+
+        // Atualiza a validade automaticamente no formulário se a categoria mudar (somente para novos itens)
+        document.getElementById('food-category').addEventListener('change', function(e) {
+            if (!document.getElementById('food-id').value) {
+                document.getElementById('food-expiry').value = getOffsetDate(getCategoryDefaultDays(e.target.value));
+            }
+        });
+        // -----------------------------------------------------
+
+        // View Mode & Batch Selection Controls
+        function setViewMode(mode) {
+            playAudio('click');
+            viewMode = mode;
+            const tableBtn = document.getElementById('view-table-btn');
+            const gridBtn = document.getElementById('view-grid-btn');
+
+            if (mode === 'table') {
+                tableBtn.className = "px-2.5 py-1.5 rounded-lg text-xs text-emerald-400 bg-slate-800 transition";
+                gridBtn.className = "px-2.5 py-1.5 rounded-lg text-xs text-slate-400 hover:text-white transition";
+            } else {
+                gridBtn.className = "px-2.5 py-1.5 rounded-lg text-xs text-emerald-400 bg-slate-800 transition";
+                tableBtn.className = "px-2.5 py-1.5 rounded-lg text-xs text-slate-400 hover:text-white transition";
+            }
+            renderInventory();
+        }
+
+        function toggleSelect(id) {
+            if (selectedItemIds.has(id)) {
+                selectedItemIds.delete(id);
+            } else {
+                selectedItemIds.add(id);
+            }
+            updateBatchBar();
+            renderInventory();
+        }
+
+        function toggleSelectAll() {
+            const allChecked = document.getElementById('select-all-checkbox').checked;
+            if (allChecked) {
+                foodItems.forEach(i => selectedItemIds.add(i.id));
+            } else {
+                selectedItemIds.clear();
+            }
+            updateBatchBar();
+            renderInventory();
+        }
+
+        function updateBatchBar() {
+            const batchBar = document.getElementById('batch-bar');
+            const countText = document.getElementById('batch-count-text');
+            if (selectedItemIds.size > 0) {
+                batchBar.classList.remove('hidden');
+                countText.textContent = `${selectedItemIds.size} item(s) selecionado(s)`;
+            } else {
+                batchBar.classList.add('hidden');
+            }
+        }
+
+        function batchConsume() {
+            playAudio('consume');
+            foodItems.forEach(item => {
+                if (selectedItemIds.has(item.id)) {
+                    item.quantity = Math.max(0, item.quantity - 1);
+                }
+            });
+            foodItems = foodItems.filter(i => i.quantity > 0);
+            selectedItemIds.clear();
+            updateBatchBar();
+            saveData();
+            renderInventory();
+            showToast('Itens selecionados consumidos/reduzidos.', 'Ação em Lote');
+        }
+
+        function batchDelete() {
+            playAudio('delete');
+            foodItems = foodItems.filter(i => !selectedItemIds.has(i.id));
+            selectedItemIds.clear();
+            updateBatchBar();
+            saveData();
+            renderInventory();
+            showToast('Itens selecionados removidos.', 'Ação em Lote');
+        }
+
+        // Quick Single Item Actions
+        function quickConsume(id) {
+            playAudio('consume');
+            const idx = foodItems.findIndex(i => i.id === id);
+            if (idx !== -1) {
+                if (foodItems[idx].quantity > 1) {
+                    foodItems[idx].quantity -= 1;
+                    showToast(`Quantidade de "${foodItems[idx].name}" reduzida.`, 'Estoque Atualizado');
+                } else {
+                    const removedName = foodItems[idx].name;
+                    foodItems.splice(idx, 1);
+                    showToast(`"${removedName}" foi consumido/descartado por completo.`, 'Item Removido');
+                }
+                saveData();
+                renderInventory();
+            }
+        }
+
+        function deleteItem(id) {
+            playAudio('delete');
+            const idx = foodItems.findIndex(i => i.id === id);
+            if (idx !== -1) {
+                const removedName = foodItems[idx].name;
+                foodItems.splice(idx, 1);
+                selectedItemIds.delete(id);
+                updateBatchBar();
+                saveData();
+                renderInventory();
+                showToast(`"${removedName}" foi removido do estoque.`, 'Item Excluído');
+            }
+        }
+
+        // Modal Controls
+        function openModal(item = null) {
+            playAudio('click');
+            const modal = document.getElementById('food-modal');
+            const modalBox = document.getElementById('modal-box');
+            const title = document.getElementById('modal-title');
+
+            if (item) {
+                title.textContent = 'Editar Alimento';
+                document.getElementById('food-id').value = item.id;
+                document.getElementById('food-name').value = item.name;
+                document.getElementById('food-barcode').value = item.barcode || '';
+                document.getElementById('food-category').value = item.category;
+                document.getElementById('food-location').value = item.location;
+                document.getElementById('food-quantity').value = item.quantity;
+                document.getElementById('food-unit').value = item.unit;
+                document.getElementById('food-expiry').value = item.expiry;
+            } else {
+                title.textContent = 'Cadastrar Novo Alimento';
+                document.getElementById('food-form').reset();
+                document.getElementById('food-id').value = '';
+                
+                // Agora usa a inteligência de categoria para definir a data inicial
+                const currentCategory = document.getElementById('food-category').value;
+                document.getElementById('food-expiry').value = getOffsetDate(getCategoryDefaultDays(currentCategory));
+            }
+
+            modal.classList.remove('opacity-0', 'pointer-events-none');
+            modalBox.classList.remove('scale-95');
+            modalBox.classList.add('scale-100');
+        }
+
+        function closeModal() {
+            playAudio('click');
+            const modal = document.getElementById('food-modal');
+            const modalBox = document.getElementById('modal-box');
+            modalBox.classList.remove('scale-100');
+            modalBox.classList.add('scale-95');
+            modal.classList.add('opacity-0', 'pointer-events-none');
+        }
+
+        function toggleAudio() {
+            soundEnabled = !soundEnabled;
+            const btn = document.getElementById('audio-btn');
+            if (soundEnabled) {
+                btn.innerHTML = `<i class="fa-solid fa-volume-high text-sm"></i>`;
+                btn.className = "p-2.5 rounded-xl glass-card text-slate-300 hover:text-emerald-400 hover:border-emerald-500/40 transition";
+                playAudio('beep');
+            } else {
+                btn.innerHTML = `<i class="fa-solid fa-volume-xmark text-sm"></i>`;
+                btn.className = "p-2.5 rounded-xl glass-card text-rose-400 border border-rose-500/40 transition";
+            }
+        }
+
+        // Sound Engine (Web Audio API)
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+        function playAudio(type = 'click') {
+            if (!soundEnabled) return;
+            try {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                const now = audioCtx.currentTime;
+
+                if (type === 'click') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(600, now);
+                    osc.frequency.exponentialRampToValueAtTime(800, now + 0.05);
+                    gain.gain.setValueAtTime(0.1, now);
+                    gain.gain.linearRampToValueAtTime(0.01, now + 0.05);
+                    osc.start(now);
+                    osc.stop(now + 0.05);
+                } else if (type === 'beep') {
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(1200, now);
+                    gain.gain.setValueAtTime(0.12, now);
+                    gain.gain.linearRampToValueAtTime(0.01, now + 0.08);
+                    osc.start(now);
+                    osc.stop(now + 0.08);
+                } else if (type === 'consume') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(400, now);
+                    osc.frequency.exponentialRampToValueAtTime(200, now + 0.1);
+                    gain.gain.setValueAtTime(0.15, now);
+                    gain.gain.linearRampToValueAtTime(0.01, now + 0.1);
+                    osc.start(now);
+                    osc.stop(now + 0.1);
+                } else if (type === 'delete') {
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(300, now);
+                    osc.frequency.exponentialRampToValueAtTime(100, now + 0.15);
+                    gain.gain.setValueAtTime(0.15, now);
+                    gain.gain.linearRampToValueAtTime(0.01, now + 0.15);
+                    osc.start(now);
+                    osc.stop(now + 0.15);
+                } else if (type === 'alert-spoiled') {
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(880, now);
+                    osc.frequency.setValueAtTime(440, now + 0.1);
+                    gain.gain.setValueAtTime(0.2, now);
+                    gain.gain.linearRampToValueAtTime(0.01, now + 0.25);
+                    osc.start(now);
+                    osc.stop(now + 0.25);
+                } else if (type === 'alert-warning') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(520, now);
+                    osc.frequency.exponentialRampToValueAtTime(650, now + 0.15);
+                    gain.gain.setValueAtTime(0.15, now);
+                    gain.gain.linearRampToValueAtTime(0.01, now + 0.2);
+                    osc.start(now);
+                    osc.stop(now + 0.2);
+                }
+            } catch (e) {
+                // Ignore audio context restrictions prior to interaction
+            }
+        }
+
+        // Web Notifications Push System
+        function requestBrowserNotifications() {
+            if (!("Notification" in window)) {
+                showToast("Este navegador não suporta Notificações Push.", "Erro Notificação");
+                return;
+            }
+
+            Notification.requestPermission().then(permission => {
+                updatePushUI();
+                if (permission === "granted") {
+                    showToast("Notificações Push do Navegador ativadas!", "FreshCheck Notificações");
+                    checkAndTriggerSystemNotifications(true);
+                } else if (permission === "denied") {
+                    showToast("Permissão para Notificações foi recusada.", "Aviso");
+                }
+            });
+        }
+
+        function updatePushUI() {
+            const btnText = document.getElementById('push-text');
+            const btnIcon = document.getElementById('push-icon');
+            const statusLabel = document.getElementById('push-status-label');
+
+            if ("Notification" in window && Notification.permission === "granted") {
+                if (btnText) btnText.textContent = "Push Ativo";
+                if (btnIcon) btnIcon.className = "fa-solid fa-bell text-xs text-emerald-400";
+                if (statusLabel) {
+                    statusLabel.textContent = "Ativo (Navegador)";
+                    statusLabel.className = "font-bold text-emerald-400";
+                }
+            } else {
+                if (btnText) btnText.textContent = "Ativar Push";
+                if (btnIcon) btnIcon.className = "fa-solid fa-bell-slash text-xs text-amber-400";
+                if (statusLabel) {
+                    statusLabel.textContent = "Inativo";
+                    statusLabel.className = "font-bold text-rose-400";
+                }
+            }
+        }
+
+        function sendSystemNotification(title, body) {
+            if ("Notification" in window && Notification.permission === "granted") {
+                try {
+                    new Notification(title, {
+                        body: body,
+                        icon: 'https://cdn-icons-png.flaticon.com/512/3652/3652191.png'
+                    });
+                } catch (e) {
+                    // Fallback
+                }
+            }
+        }
+
+        // Notification Drawer Controls
+        function toggleNotificationDrawer() {
+            playAudio('click');
+            const drawer = document.getElementById('notif-drawer');
+            drawer.classList.toggle('translate-x-full');
+        }
+
+        function filterStatusDirect(statusValue) {
+            document.getElementById('filter-status').value = statusValue;
+            renderInventory();
+        }
+
+        // Check & Process Notifications
+        function processNotifications() {
+            const notifContainer = document.getElementById('notif-list-container');
+            const badge = document.getElementById('notif-badge');
+            const banner = document.getElementById('critical-alert-banner');
+            const bannerText = document.getElementById('critical-alert-text');
+
+            if (!notifContainer) return;
+            notifContainer.innerHTML = '';
+
+            const spoiledItems = [];
+            const warningItems = [];
+
+            foodItems.forEach(item => {
+                const days = getDaysUntilExpiry(item.expiry);
+                if (days <= 0) {
+                    spoiledItems.push({ item, days });
+                } else if (days <= 3) {
+                    warningItems.push({ item, days });
+                }
+            });
+
+            const totalAlerts = spoiledItems.length + warningItems.length;
+
+            if (totalAlerts > 0) {
+                badge.textContent = totalAlerts;
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+            }
+
+            if (totalAlerts > 0) {
+                banner.classList.remove('hidden');
+                if (spoiledItems.length > 0) {
+                    const names = spoiledItems.map(i => i.item.name).slice(0, 2).join(', ');
+                    bannerText.textContent = `${spoiledItems.length} alimento(s) ESTRAGADO(S)/VENCIDO(S): ${names}${spoiledItems.length > 2 ? ' e outros...' : ''}`;
+                } else {
+                    const names = warningItems.map(i => i.item.name).slice(0, 2).join(', ');
+                    bannerText.textContent = `${warningItems.length} alimento(s) PRÉ-ESTRAGADO(S) (vencem em ≤ 3 dias): ${names}`;
+                }
+            } else {
+                banner.classList.add('hidden');
+            }
+
+            if (totalAlerts === 0) {
+                notifContainer.innerHTML = `
+                    <div class="py-12 text-center text-slate-500">
+                        <i class="fa-solid fa-shield-check text-3xl mb-2 text-emerald-500/40"></i>
+                        <p class="text-xs">Nenhum alerta pendente!</p>
+                        <p class="text-[10px] text-slate-600 mt-1">Todos os alimentos estão dentro da validade segura.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            spoiledItems.forEach(({ item, days }) => {
+                const card = document.createElement('div');
+                card.className = "p-3.5 rounded-2xl bg-rose-950/40 border border-rose-500/40 flex flex-col space-y-2";
+                card.innerHTML = `
+                    <div class="flex items-start justify-between">
+                        <div class="flex items-center space-x-2">
+                            <span class="w-2 h-2 rounded-full bg-rose-500 animate-ping"></span>
+                            <h4 class="font-bold text-xs text-rose-300">🔴 PRODUTO ESTRAGADO / VENCIDO</h4>
+                        </div>
+                        <span class="text-[10px] text-rose-400 font-mono font-bold">${days < 0 ? `Vencido há ${Math.abs(days)}d` : 'Venceu Hoje'}</span>
+                    </div>
+                    <div class="text-xs text-slate-200">
+                        <strong>${escapeHtml(item.name)}</strong> (${item.quantity} ${item.unit}) guardado no(a) <em>${escapeHtml(item.location)}</em>.
+                    </div>
+                    <div class="flex items-center justify-end space-x-2 pt-1 border-t border-rose-500/20">
+                        <button onclick="quickConsume('${item.id}')" class="px-2.5 py-1 bg-rose-500 hover:bg-rose-400 text-slate-950 font-bold text-[11px] rounded-lg transition">
+                            <i class="fa-solid fa-trash mr-1"></i> Descartar Agora
+                        </button>
+                    </div>
+                `;
+                notifContainer.appendChild(card);
+            });
+
+            warningItems.forEach(({ item, days }) => {
+                const card = document.createElement('div');
+                card.className = "p-3.5 rounded-2xl bg-amber-950/40 border border-amber-500/40 flex flex-col space-y-2";
+                card.innerHTML = `
+                    <div class="flex items-start justify-between">
+                        <div class="flex items-center space-x-2">
+                            <span class="w-2 h-2 rounded-full bg-amber-400"></span>
+                            <h4 class="font-bold text-xs text-amber-300">🟡 PRÉ-ESTRAGADO (PRÓXIMO)</h4>
+                        </div>
+                        <span class="text-[10px] text-amber-400 font-mono font-bold">Vence em ${days}d</span>
+                    </div>
+                    <div class="text-xs text-slate-200">
+                        <strong>${escapeHtml(item.name)}</strong> (${item.quantity} ${item.unit}) guardado no(a) <em>${escapeHtml(item.location)}</em>.
+                    </div>
+                    <div class="flex items-center justify-end space-x-2 pt-1 border-t border-amber-500/20">
+                        <button onclick="quickConsume('${item.id}')" class="px-2.5 py-1 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-[11px] rounded-lg transition">
+                            <i class="fa-solid fa-utensils mr-1"></i> Consumir Primeiro
+                        </button>
+                    </div>
+                `;
+                notifContainer.appendChild(card);
+            });
+        }
+
+        function checkAndTriggerSystemNotifications(forceSound = false) {
+            const spoiled = foodItems.filter(i => getDaysUntilExpiry(i.expiry) <= 0);
+            const warning = foodItems.filter(i => {
+                const d = getDaysUntilExpiry(i.expiry);
+                return d > 0 && d <= 3;
+            });
+
+            if (spoiled.length > 0) {
+                if (forceSound) playAudio('alert-spoiled');
+                sendSystemNotification(
+                    "🔴 FreshCheck: Alimentos Estragados!",
+                    `Existem ${spoiled.length} alimento(s) vencido(s) no seu estoque!`
+                );
+            } else if (warning.length > 0) {
+                if (forceSound) playAudio('alert-warning');
+                sendSystemNotification(
+                    "🟡 FreshCheck: Alimentos Pré-Estragados!",
+                    `Atenção: ${warning.length} alimento(s) vencerão nos próximos 3 dias.`
+                );
+            }
+        }
+
+        // Initialization update
+        window.addEventListener('DOMContentLoaded', () => {
+            loadData();
+            updatePushUI();
+
+            setTimeout(() => {
+                checkAndTriggerSystemNotifications(true);
+            }, 800);
+
+            document.getElementById('search-input').addEventListener('input', renderInventory);
+            document.getElementById('filter-status').addEventListener('change', renderInventory);
+            document.getElementById('filter-category').addEventListener('change', renderInventory);
+            document.getElementById('filter-location').addEventListener('change', renderInventory);
+        });
+
+        // Render Inventory Overhaul with Explicit Badges
+        function renderInventory() {
+            const tbody = document.getElementById('food-list-tbody');
+            const gridContainer = document.getElementById('grid-view-container');
+            const emptyState = document.getElementById('empty-state');
+            
+            tbody.innerHTML = '';
+            gridContainer.innerHTML = '';
+
+            const searchStr = document.getElementById('search-input').value.toLowerCase().trim();
+            const statusFilter = document.getElementById('filter-status').value;
+            const catFilter = document.getElementById('filter-category').value;
+            const locFilter = document.getElementById('filter-location').value;
+
+            let total = foodItems.length;
+            let safe = 0, warning = 0, urgent = 0;
+
+            foodItems.forEach(item => {
+                const days = getDaysUntilExpiry(item.expiry);
+                const st = getItemStatus(days);
+                if (st === 'safe') safe++;
+                else if (st === 'warning') warning++;
+                else if (st === 'urgent') urgent++;
+            });
+
+            document.getElementById('stat-total').textContent = total;
+            document.getElementById('stat-safe').textContent = safe;
+            document.getElementById('stat-warning').textContent = warning;
+            document.getElementById('stat-urgent').textContent = urgent;
+
+            const filtered = foodItems.filter(item => {
+                const days = getDaysUntilExpiry(item.expiry);
+                const st = getItemStatus(days);
+
+                const matchSearch = item.name.toLowerCase().includes(searchStr) || (item.barcode && item.barcode.includes(searchStr));
+                const matchStatus = statusFilter === 'all' || st === statusFilter;
+                const matchCat = catFilter === 'all' || item.category === catFilter;
+                const matchLoc = locFilter === 'all' || item.location === locFilter;
+
+                return matchSearch && matchStatus && matchCat && matchLoc;
+            });
+
+            filtered.sort((a, b) => new Date(a.expiry) - new Date(b.expiry));
+
+            if (filtered.length === 0) {
+                emptyState.classList.remove('hidden');
+                document.getElementById('table-view-container').classList.add('hidden');
+                gridContainer.classList.add('hidden');
+            } else {
+                emptyState.classList.add('hidden');
+                if (viewMode === 'table') {
+                    document.getElementById('table-view-container').classList.remove('hidden');
+                    gridContainer.classList.add('hidden');
+                } else {
+                    document.getElementById('table-view-container').classList.add('hidden');
+                    gridContainer.classList.remove('hidden');
+                }
+            }
+
+            const catIcons = {
+                'Frutas/Legumes': 'fa-apple-whole text-emerald-400',
+                'Lacticínios': 'fa-cheese text-amber-400',
+                'Carnes/Peixes': 'fa-drumstick-bite text-rose-400',
+                'Bebidas': 'fa-glass-water text-cyan-400',
+                'Grãos/Sobremesas': 'fa-cookie text-yellow-400',
+                'Outros': 'fa-box text-slate-400'
+            };
+
+            filtered.forEach(item => {
+                const days = getDaysUntilExpiry(item.expiry);
+                const isSelected = selectedItemIds.has(item.id);
+
+                let badgeMarkup = '';
+                let daysText = '';
+
+                if (days < 0) {
+                    daysText = `Vencido há ${Math.abs(days)}d`;
+                    badgeMarkup = `<span class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-black bg-rose-500/20 text-rose-400 border border-rose-500/50 shadow-neon-danger">
+                        <span class="w-2 h-2 rounded-full bg-rose-500 mr-1.5 animate-ping"></span> 🔴 ESTRAGADO
+                    </span>`;
+                } else if (days === 0) {
+                    daysText = 'Vence Hoje!';
+                    badgeMarkup = `<span class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-black bg-rose-500/20 text-rose-400 border border-rose-500/50 shadow-neon-danger">
+                        <span class="w-2 h-2 rounded-full bg-rose-500 mr-1.5 animate-pulse"></span> 🔴 ESTRAGADO (HOJE)
+                    </span>`;
+                } else if (days <= 3) {
+                    daysText = `Vence em ${days}d`;
+                    badgeMarkup = `<span class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40">
+                        <span class="w-2 h-2 rounded-full bg-amber-400 mr-1.5"></span> 🟡 PRÉ-ESTRAGADO
+                    </span>`;
+                } else if (days <= 7) {
+                    daysText = `Vence em ${days}d`;
+                    badgeMarkup = `<span class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-500/10 text-amber-400 border border-amber-500/30">
+                        ATENÇÃO
+                    </span>`;
+                } else {
+                    daysText = `Vence em ${days}d`;
+                    badgeMarkup = `<span class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
+                        🟢 FRESCO
+                    </span>`;
+                }
+
+                const iconClass = catIcons[item.category] || 'fa-box text-slate-400';
+                const [y, m, d] = item.expiry.split('-');
+                const formattedDate = `${d}/${m}/${y}`;
+
+                const tr = document.createElement('tr');
+                tr.className = `hover:bg-slate-800/40 transition border-b border-slate-800/40 ${isSelected ? 'bg-emerald-950/20' : ''}`;
+                tr.innerHTML = `
+                    <td class="py-4 px-4">
+                        <input type="checkbox" onchange="toggleSelect('${item.id}')" ${isSelected ? 'checked' : ''} class="rounded border-slate-700 bg-slate-900 text-emerald-500 focus:ring-emerald-500">
+                    </td>
+                    <td class="py-4 px-4">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-9 h-9 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center shrink-0">
+                                <i class="fa-solid ${iconClass} text-sm"></i>
+                            </div>
+                            <div>
+                                <div class="font-bold text-white">${escapeHtml(item.name)}</div>
+                                <div class="text-[10px] text-slate-500 font-mono">BAR: ${item.barcode || 'N/A'}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="py-4 px-4 text-xs text-slate-300 font-medium">${escapeHtml(item.category)}</td>
+                    <td class="py-4 px-4 text-xs">
+                        <span class="px-2.5 py-1 rounded-lg bg-slate-900 text-slate-300 border border-slate-800 text-[11px]">
+                            ${escapeHtml(item.location)}
+                        </span>
+                    </td>
+                    <td class="py-4 px-4">
+                        <div class="flex items-center space-x-2">
+                            <span class="font-bold text-emerald-400">${item.quantity} ${item.unit}</span>
+                            <button onclick="quickConsume('${item.id}')" title="Consumir / Descartar -1" class="w-6 h-6 rounded-lg bg-slate-800 hover:bg-emerald-500 hover:text-slate-950 text-slate-400 text-xs font-bold transition flex items-center justify-center">
+                                -1
+                            </button>
+                        </div>
+                    </td>
+                    <td class="py-4 px-4 text-xs">
+                        <div class="font-semibold text-slate-200">${formattedDate}</div>
+                        <div class="text-[10px] text-slate-400">${daysText}</div>
+                    </td>
+                    <td class="py-4 px-4">${badgeMarkup}</td>
+                    <td class="py-4 px-6 text-right">
+                        <div class="flex items-center justify-end space-x-2">
+                            <button onclick="editItem('${item.id}')" title="Editar Item" class="p-2 text-slate-400 hover:text-emerald-400 hover:bg-slate-800 rounded-xl transition">
+                                <i class="fa-solid fa-pen-to-square"></i>
+                            </button>
+                            <button onclick="deleteItem('${item.id}')" title="Excluir Item" class="p-2 text-slate-400 hover:text-rose-400 hover:bg-slate-800 rounded-xl transition">
+                                <i class="fa-solid fa-trash-can"></i>
+                            </button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+
+                const card = document.createElement('div');
+                card.className = `glass-card p-5 rounded-2xl relative flex flex-col justify-between border ${isSelected ? 'border-emerald-500' : 'border-slate-800'} hover:border-slate-700 transition`;
+                card.innerHTML = `
+                    <div>
+                        <div class="flex items-start justify-between mb-3">
+                            <div class="flex items-center space-x-2">
+                                <div class="w-8 h-8 rounded-lg bg-slate-900 border border-slate-800 flex items-center justify-center">
+                                    <i class="fa-solid ${iconClass} text-xs"></i>
+                                </div>
+                                <div>
+                                    <h4 class="font-bold text-white text-sm line-clamp-1">${escapeHtml(item.name)}</h4>
+                                    <span class="text-[10px] text-slate-400">${item.category} • ${item.location}</span>
+                                </div>
+                            </div>
+                            ${badgeMarkup}
+                        </div>
+                        
+                        <div class="my-3 py-2 px-3 bg-slate-900/60 rounded-xl border border-slate-800/80 flex items-center justify-between text-xs">
+                            <span class="text-slate-400">Estoque:</span>
+                            <span class="font-bold text-emerald-400">${item.quantity} ${item.unit}</span>
+                        </div>
+
+                        <div class="text-xs text-slate-400 flex items-center justify-between">
+                            <span>Validade: <strong class="text-slate-200">${formattedDate}</strong></span>
+                            <span class="text-[10px] font-semibold text-amber-300">${daysText}</span>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 pt-3 border-t border-slate-800/80 flex items-center justify-between">
+                        <button onclick="quickConsume('${item.id}')" class="px-2.5 py-1 bg-emerald-500/10 hover:bg-emerald-500 text-emerald-400 hover:text-slate-950 border border-emerald-500/30 text-xs font-bold rounded-lg transition">
+                            <i class="fa-solid fa-utensils mr-1"></i> Consumir / Descartar (-1)
+                        </button>
+                        <div class="flex items-center space-x-1">
+                            <button onclick="editItem('${item.id}')" class="p-2 text-slate-400 hover:text-emerald-400 transition">
+                                <i class="fa-solid fa-pen-to-square"></i>
+                            </button>
+                            <button onclick="deleteItem('${item.id}')" class="p-2 text-slate-400 hover:text-rose-400 transition">
+                                <i class="fa-solid fa-trash-can"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+                gridContainer.appendChild(card);
+            });
+
+            processNotifications();
+            updateAIInsight(foodItems);
+            updateChart(safe, warning, urgent);
+        }
+
+        function handleFormSubmit(e) {
+            e.preventDefault();
+            playAudio('beep');
+
+            const id = document.getElementById('food-id').value;
+            const name = document.getElementById('food-name').value.trim();
+            const barcode = document.getElementById('food-barcode').value.trim();
+            const category = document.getElementById('food-category').value;
+            const location = document.getElementById('food-location').value;
+            const quantity = parseFloat(document.getElementById('food-quantity').value);
+            const unit = document.getElementById('food-unit').value;
+            const expiry = document.getElementById('food-expiry').value;
+
+            if (id) {
+                const idx = foodItems.findIndex(i => i.id === id);
+                if (idx !== -1) {
+                    foodItems[idx] = { id, name, barcode, category, location, quantity, unit, expiry };
+                    showToast(`"${name}" foi atualizado!`, 'Alimento Atualizado');
+                }
+            } else {
+                const newItem = {
+                    id: Date.now().toString(),
+                    name,
+                    barcode,
+                    category,
+                    location,
+                    quantity,
+                    unit,
+                    expiry
+                };
+                foodItems.push(newItem);
+                showToast(`"${name}" adicionado com sucesso!`, 'Novo Registro');
+            }
+
+            saveData();
+            renderInventory();
+            checkAndTriggerSystemNotifications(true);
+            closeModal();
+        }
+
+        function editItem(id) {
+            const item = foodItems.find(i => i.id === id);
+            if (item) openModal(item);
+        }
+
+        // Real Camera Barcode Scanner Engine
+        let html5QrCode = null;
+        let isScanning = false;
+
+        async function openCameraScanner() {
+            playAudio('click');
+            const modal = document.getElementById('scanner-modal');
+            const modalBox = document.getElementById('scanner-modal-box');
+            const loading = document.getElementById('scanner-loading');
+            const errorMsg = document.getElementById('scanner-error-msg');
+
+            errorMsg.classList.add('hidden');
+            loading.classList.remove('hidden');
+            modal.classList.remove('opacity-0', 'pointer-events-none');
+            modalBox.classList.remove('scale-95');
+            modalBox.classList.add('scale-100');
+
+            try {
+                if (!html5QrCode) {
+                    const formatsToSupport = [
+                        Html5QrcodeSupportedFormats.EAN_13,
+                        Html5QrcodeSupportedFormats.EAN_8,
+                        Html5QrcodeSupportedFormats.UPC_A,
+                        Html5QrcodeSupportedFormats.UPC_E,
+                        Html5QrcodeSupportedFormats.CODE_128,
+                        Html5QrcodeSupportedFormats.CODE_39,
+                        Html5QrcodeSupportedFormats.QR_CODE
+                    ];
+                    html5QrCode = new Html5Qrcode("qr-reader", {
+                        formatsToSupport: formatsToSupport,
+                        experimentalFeatures: {
+                            useBarCodeDetectorIfSupported: true
+                        },
+                        verbose: false
+                    });
+                }
+
+                const config = {
+                    fps: 15,
+                    qrbox: function(viewfinderWidth, viewfinderHeight) {
+                        const width = Math.min(Math.floor(viewfinderWidth * 0.85), 320);
+                        const height = Math.min(Math.floor(viewfinderHeight * 0.45), 140);
+                        return { width: Math.max(width, 200), height: Math.max(height, 100) };
+                    },
+                    videoConstraints: {
+                        facingMode: "environment",
+                        focusMode: "continuous"
+                    }
+                };
+
+                await html5QrCode.start(
+                    { facingMode: "environment" },
+                    config,
+                    (decodedText) => {
+                        onBarcodeScanned(decodedText);
+                    },
+                    () => {
+                        // Scanning in progress
+                    }
+                );
+
+                isScanning = true;
+                loading.classList.add('hidden');
+            } catch (err) {
+                loading.classList.add('hidden');
+                errorMsg.classList.remove('hidden');
+                errorMsg.innerHTML = `
+                    <i class="fa-solid fa-triangle-exclamation mr-1"></i>
+                    <strong>Câmara indisponível ou permissão negada.</strong><br>
+                    Certifique-se de permitir o acesso à câmara no navegador ou use "Simular Leitura".
+                `;
+                console.warn("Erro ao abrir câmara:", err);
+            }
+        }
+
+        async function closeCameraScanner() {
+            playAudio('click');
+            const modal = document.getElementById('scanner-modal');
+            const modalBox = document.getElementById('scanner-modal-box');
+
+            modalBox.classList.remove('scale-100');
+            modalBox.classList.add('scale-95');
+            modal.classList.add('opacity-0', 'pointer-events-none');
+
+            if (html5QrCode && isScanning) {
+                try {
+                    await html5QrCode.stop();
+                    isScanning = false;
+                } catch (e) {
+                    console.warn("Erro ao parar scanner:", e);
+                }
+            }
+        }
+
+        async function onBarcodeScanned(barcodeText) {
+            if (!isScanning && !barcodeText) return;
+            isScanning = false;
+            playAudio('beep');
+            await closeCameraScanner();
+
+            // Pre-fill form modal with scanned barcode
+            openModal();
+            document.getElementById('food-barcode').value = barcodeText;
+            const nameInput = document.getElementById('food-name');
+            nameInput.value = 'A pesquisar produto...';
+
+            // Smart local database lookup for common barcodes
+            const knownProducts = {
+                '7891000100103': { name: 'Leite Condensado Moça 395g', category: 'Grãos/Sobremesas', location: 'Despensa', unit: 'un' },
+                '7894900011517': { name: 'Refrigerante Coca-Cola 2L', category: 'Bebidas', location: 'Frigorífico', unit: 'L' },
+                '7891910000197': { name: 'Açúcar Refinado União 1kg', category: 'Grãos/Sobremesas', location: 'Despensa', unit: 'kg' }
+            };
+
+            if (knownProducts[barcodeText]) {
+                const prod = knownProducts[barcodeText];
+                nameInput.value = prod.name;
+                document.getElementById('food-category').value = prod.category;
+                document.getElementById('food-location').value = prod.location;
+                document.getElementById('food-unit').value = prod.unit;
+                
+                // Aplica a validade inteligente baseada na categoria
+                document.getElementById('food-expiry').value = getOffsetDate(getCategoryDefaultDays(prod.category));
+                
+                showToast(`Produto reconhecido: ${prod.name}. Confirme a validade!`, 'Código Lido');
+                return;
+            }
+
+            // Query Open Food Facts Global Database API
+            try {
+                const response = await fetch(`https://world.openfoodfacts.org/api/v2/product/${encodeURIComponent(barcodeText)}.json`);
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data && data.status === 1 && data.product) {
+                        const prodName = data.product.product_name_pt || data.product.product_name || data.product.brands || '';
+                        if (prodName) {
+                            nameInput.value = prodName;
+                            
+                            // Tenta adivinhar a categoria pelo nome para ajustar a validade automaticamente
+                            const guessedCategory = guessCategoryFromName(prodName);
+                            document.getElementById('food-category').value = guessedCategory;
+                            document.getElementById('food-expiry').value = getOffsetDate(getCategoryDefaultDays(guessedCategory));
+
+                            showToast(`Produto encontrado: ${prodName}. Confirme a data de validade!`, 'Base Online');
+                            return;
+                        }
+                    }
+                }
+            } catch (apiErr) {
+                console.warn("Consulta online indisponível:", apiErr);
+            }
+
+            nameInput.value = '';
+            nameInput.focus();
+            showToast(`Código ${barcodeText} capturado! Digite o nome e valide a data impressa no pacote.`, 'Leitura Concluída');
+        }
+
+        async function simulateScanFallback() {
+            await closeCameraScanner();
+            const randomBarcode = '789' + Math.floor(1000000000 + Math.random() * 9000000000);
+            onBarcodeScanned(randomBarcode);
+        }
+
+        // AI Insight Generator
+        function updateAIInsight(items) {
+            const container = document.getElementById('ai-insight-content');
+            
+            if (items.length === 0) {
+                container.innerHTML = `
+                    <div class="p-3 rounded-xl bg-slate-900 border border-slate-800 text-slate-400 text-xs">
+                        <i class="fa-solid fa-info-circle mr-1.5 text-cyan-400"></i>
+                        Cadastre seus alimentos para que a inteligência do sistema analise riscos de vencimento.
+                    </div>
+                `;
+                document.getElementById('saved-economy-text').innerHTML = `Economia estimada: <strong class="text-emerald-400">R$ 0,00</strong>`;
+                return;
+            }
+
+            const urgentItems = items.filter(i => getDaysUntilExpiry(i.expiry) <= 3);
+
+            if (urgentItems.length > 0) {
+                const names = urgentItems.map(i => i.name).slice(0, 3).join(', ');
+                container.innerHTML = `
+                    <div class="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs">
+                        <i class="fa-solid fa-triangle-exclamation mr-1.5"></i>
+                        <strong>Aviso de Consumo:</strong> <span class="underline">${escapeHtml(names)}</span> estão próximos do vencimento.
+                    </div>
+                    <p class="text-xs text-slate-400">Priorize estes ingredientes para o próximo cardápio e evite desperdícios.</p>
+                `;
+            } else {
+                container.innerHTML = `
+                    <div class="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs">
+                        <i class="fa-solid fa-circle-check mr-1.5"></i>
+                        <strong>Estoque Seguro:</strong> Nenhum item crítico nos próximos 3 dias.
+                    </div>
+                    <p class="text-xs text-slate-400">Excelente gestão! Seu inventário está mantido de forma otimizada.</p>
+                `;
+            }
+
+            const economy = (items.length * 15.00).toFixed(2);
+            document.getElementById('saved-economy-text').innerHTML = `Economia estimada: <strong class="text-emerald-400">R$ ${economy}</strong>`;
+        }
+
+        // AI Recipe Generator
+        function generateAIRecipe() {
+            playAudio('beep');
+            const modal = document.getElementById('recipe-modal');
+            const content = document.getElementById('recipe-content');
+
+            if (foodItems.length === 0) {
+                content.innerHTML = `<p class="text-slate-400">Adicione alimentos ao inventário primeiro para a IA sugerir uma receita.</p>`;
+                modal.classList.remove('opacity-0', 'pointer-events-none');
+                return;
+            }
+
+            const urgentItems = foodItems.filter(i => getDaysUntilExpiry(i.expiry) <= 5);
+            const mainIng = urgentItems.length > 0 ? urgentItems[0].name : foodItems[0].name;
+
+            content.innerHTML = `
+                <div class="p-3 bg-slate-900 rounded-xl border border-slate-800">
+                    <span class="text-cyan-400 font-bold">Sugestão Rápida:</span> Salteado de <strong>${escapeHtml(mainIng)}</strong>
+                </div>
+                <p><strong>Modo de Preparo Recomendado:</strong></p>
+                <ol class="list-decimal list-inside space-y-1 text-slate-300">
+                    <li>Pique os itens em estado de atenção (${escapeHtml(mainIng)}).</li>
+                    <li>Refogue com 1 colher de azeite e alho picado por 5 minutos.</li>
+                    <li>Adicione ervas ou queijo a gosto e sirva quente!</li>
+                </ol>
+            `;
+
+            modal.classList.remove('opacity-0', 'pointer-events-none');
+        }
+
+        function closeRecipeModal() {
+            playAudio('click');
+            const modal = document.getElementById('recipe-modal');
+            modal.classList.add('opacity-0', 'pointer-events-none');
+        }
+
+        // Premium Plans Controls
+        function openUpgradeModal() {
+            playAudio('click');
+            const modal = document.getElementById('upgrade-modal');
+            modal.classList.remove('opacity-0', 'pointer-events-none');
+            modal.querySelector('.glass-panel').classList.remove('scale-95');
+            modal.querySelector('.glass-panel').classList.add('scale-100');
+        }
+
+        function closeUpgradeModal() {
+            playAudio('click');
+            const modal = document.getElementById('upgrade-modal');
+            modal.querySelector('.glass-panel').classList.remove('scale-100');
+            modal.querySelector('.glass-panel').classList.add('scale-95');
+            modal.classList.add('opacity-0', 'pointer-events-none');
+        }
+
+        function requirePremium(featureName) {
+            playAudio('alert-warning');
+            showToast(`"${featureName}" é exclusivo. Atualize o plano!`, 'Recurso Premium');
+            setTimeout(openUpgradeModal, 600);
+        }
+
+        // Pix Payment Controls
+        function showPixPayment(plan, price) {
+            playAudio('click');
+            closeUpgradeModal();
+            
+            document.getElementById('pix-plan-name').textContent = plan;
+            document.getElementById('pix-plan-price').textContent = price;
+            
+            const modal = document.getElementById('pix-modal');
+            modal.classList.remove('opacity-0', 'pointer-events-none');
+            modal.querySelector('.glass-panel').classList.remove('scale-95');
+            modal.querySelector('.glass-panel').classList.add('scale-100');
+        }
+
+        function closePixPayment() {
+            playAudio('click');
+            const modal = document.getElementById('pix-modal');
+            modal.querySelector('.glass-panel').classList.remove('scale-100');
+            modal.querySelector('.glass-panel').classList.add('scale-95');
+            modal.classList.add('opacity-0', 'pointer-events-none');
+        }
+
+        function copyPixKey() {
+            playAudio('beep');
+            try {
+                // Tenta usar a API de Clipboard para copiar
+                navigator.clipboard.writeText('anicetolucasgabriel07@gmail.com').then(() => {
+                    showToast('Chave PIX copiada! Abra o seu banco e cole.', 'Pagamento PIX');
+                }).catch(() => {
+                    // Fallback para ambientes embutidos (iFrames)
+                    document.execCommand('copy');
+                    showToast('Chave PIX copiada manualmente.', 'Pagamento PIX');
+                });
+            } catch (err) {
+                const tempInput = document.createElement("input");
+                tempInput.value = "anicetolucasgabriel07@gmail.com";
+                document.body.appendChild(tempInput);
+                tempInput.select();
+                document.execCommand("copy");
+                document.body.removeChild(tempInput);
+                showToast('Chave PIX copiada.', 'Pagamento PIX');
+            }
+        }
+
+        // Chart Manager
+        function updateChart(safe, warning, urgent) {
+            const ctx = document.getElementById('inventoryChart').getContext('2d');
+
+            if (myChart) {
+                myChart.destroy();
+            }
+
+            myChart = new Chart(ctx, {
+                type: chartType,
+                data: {
+                    labels: ['Saudável (>7d)', 'Atenção (3-7d)', 'Crítico (≤2d)'],
+                    datasets: [{
+                        data: [safe, warning, urgent],
+                        backgroundColor: [
+                            'rgba(0, 230, 118, 0.8)',
+                            'rgba(255, 179, 0, 0.8)',
+                            'rgba(255, 23, 68, 0.8)'
+                        ],
+                        borderColor: [
+                            '#00E676',
+                            '#FFB300',
+                            '#FF1744'
+                        ],
+                        borderWidth: 1.5
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                            labels: {
+                                color: '#94a3b8',
+                                font: { family: 'Plus Jakarta Sans', size: 11 }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function toggleChartType() {
+            playAudio('click');
+            chartType = chartType === 'doughnut' ? 'bar' : 'doughnut';
+            renderInventory();
+        }
+
+        // Filter Reset
+        function resetFilters() {
+            document.getElementById('search-input').value = '';
+            document.getElementById('filter-status').value = 'all';
+            document.getElementById('filter-category').value = 'all';
+            document.getElementById('filter-location').value = 'all';
+            renderInventory();
+        }
+
+        // Toast Messages
+        function showToast(message, title = 'FreshCheck') {
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-title').textContent = title;
+            document.getElementById('toast-message').textContent = message;
+
+            toast.classList.remove('translate-y-20', 'opacity-0', 'pointer-events-none');
+
+            setTimeout(() => {
+                toast.classList.add('translate-y-20', 'opacity-0', 'pointer-events-none');
+            }, 3000);
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/[&<>"']/g, function(m) {
+                return {
+                    '&': '&amp;',
+                    '<': '&lt;',
+                    '>': '&gt;',
+                    '"': '&quot;',
+                    "'": '&#039;'
+                }[m];
+            });
+        }
+    </script>
+</body>
+</html>
