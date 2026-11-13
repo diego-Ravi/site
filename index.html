@@ -12,7 +12,6 @@
 
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <script src="https://unpkg.com/html5-qrcode"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <script>
@@ -137,8 +136,9 @@
             <div class="glass-panel rounded-2xl p-5 shadow-lg border border-slate-800">
                 <div class="flex justify-between items-center mb-5">
                     <h2 class="text-sm font-bold uppercase tracking-wider text-slate-300">Adicionar Entrada</h2>
-                    <button onclick="openScannerModal()" class="w-10 h-10 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 text-slate-900 flex items-center justify-center transition shadow-neon-green transform hover:scale-105">
-                        <i class="fa-solid fa-barcode text-lg"></i>
+                    <button onclick="openScannerModal()" title="Escanear Produto com IA" class="px-3 h-10 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 text-slate-950 font-bold text-xs flex items-center space-x-2 transition shadow-neon-green transform hover:scale-105">
+                        <i class="fa-solid fa-camera text-sm"></i>
+                        <span>Scan IA</span>
                     </button>
                 </div>
                 
@@ -215,7 +215,7 @@
             </div>
             
             <!-- Botão Chef IA (Premium) -->
-            <button onclick="requirePremium('Chef IA Nutricional')" class="w-full glass-panel rounded-2xl p-4 shadow-lg border border-purple-500/30 hover:border-purple-500/60 transition group relative overflow-hidden flex items-center justify-between">
+            <button onclick="openChefAIModal()" class="w-full glass-panel rounded-2xl p-4 shadow-lg border border-purple-500/30 hover:border-purple-500/60 transition group relative overflow-hidden flex items-center justify-between">
                 <div class="absolute inset-0 bg-gradient-to-r from-purple-500/10 to-transparent opacity-0 group-hover:opacity-100 transition"></div>
                 <div class="flex items-center space-x-4 relative z-10">
                     <div class="w-10 h-10 rounded-xl bg-purple-500/20 text-purple-400 flex items-center justify-center border border-purple-500/30">
@@ -304,38 +304,76 @@
         </div>
     </main>
 
-    <!-- Scanner Modal (Laser Animado) -->
-    <div id="scanner-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-300">
-        <div class="glass-panel border border-cyan-500/50 rounded-3xl shadow-neon-teal w-full max-w-md overflow-hidden transform scale-95 transition-all duration-300">
+    <!-- Scanner Visual IA Modal (Duas Fotos: Frente e Validade) -->
+    <div id="scanner-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md opacity-0 pointer-events-none transition-opacity duration-300">
+        <div class="glass-panel border border-cyan-500/50 rounded-3xl shadow-neon-teal w-full max-w-lg overflow-hidden transform scale-95 transition-all duration-300">
             <div class="px-6 py-4 border-b border-slate-800 bg-slate-900/80 flex items-center justify-between">
                 <h3 class="text-sm font-bold text-white uppercase tracking-wider flex items-center space-x-2">
-                    <i class="fa-solid fa-camera text-cyan-400"></i>
-                    <span>Scanner IA</span>
+                    <i class="fa-solid fa-eye text-cyan-400"></i>
+                    <span>Visão Computacional IA</span>
                 </h3>
                 <button onclick="closeScannerModal()" class="text-slate-400 hover:text-white p-2 rounded-xl hover:bg-slate-800 transition">
                     <i class="fa-solid fa-xmark text-lg"></i>
                 </button>
             </div>
             
-            <div class="p-5 flex flex-col items-center space-y-4">
-                <div class="relative w-full rounded-2xl overflow-hidden bg-black border-2 border-cyan-500/40 shadow-inner min-h-[260px] flex items-center justify-center">
-                    <div id="qr-reader" class="w-full"></div>
-                    <div id="scanner-laser" class="scanner-laser hidden"></div>
-                    <div id="scanner-loading" class="absolute inset-0 flex flex-col items-center justify-center bg-slate-950/90 text-cyan-400 text-xs space-y-2">
-                        <i class="fa-solid fa-spinner fa-spin text-2xl"></i>
-                        <span>Acessar Hardware Óptico...</span>
-                    </div>
-                </div>
-                
-                <p class="text-xs text-slate-400 text-center font-mono">
-                    Posicione o código de barras (EAN) no centro do feixe. A IA tentará preencher os dados automaticamente.
+            <div class="p-6 flex flex-col space-y-5">
+                <p class="text-xs text-slate-300 text-center">
+                    Tire ou selecione <strong class="text-cyan-400">duas fotos</strong> do produto. A Inteligência Artificial identificará o alimento, a categoria e a data de validade automaticamente!
                 </p>
 
-                <button onclick="requirePremium('Leitura de Cupom Fiscal em Massa')" class="w-full py-2 border border-slate-700 rounded-xl text-xs text-slate-400 hover:bg-slate-800 transition flex items-center justify-center space-x-2">
-                    <i class="fa-solid fa-receipt"></i>
-                    <span>Escanear Cupom Fiscal Inteiro</span>
-                    <i class="fa-solid fa-lock text-[10px] text-amber-500 ml-1"></i>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <!-- Foto 1: Frente do Produto -->
+                    <label for="input-photo-front" class="relative cursor-pointer group rounded-2xl border-2 border-dashed border-slate-700 hover:border-emerald-500/70 bg-slate-900/60 h-44 flex flex-col items-center justify-center overflow-hidden transition">
+                        <input type="file" id="input-photo-front" accept="image/*" capture="environment" class="hidden" onchange="handlePhotoUpload(event, 'front')">
+                        <img id="preview-photo-front" class="hidden w-full h-full object-cover" alt="Frente do Produto">
+                        <div id="placeholder-photo-front" class="flex flex-col items-center p-4 text-center">
+                            <div class="w-10 h-10 rounded-full bg-emerald-500/10 text-emerald-400 flex items-center justify-center mb-2 group-hover:scale-110 transition">
+                                <i class="fa-solid fa-box-open text-lg"></i>
+                            </div>
+                            <span class="text-xs font-bold text-white">1. Frente do Produto</span>
+                            <span class="text-[10px] text-slate-400 mt-1">Nome e Embalagem</span>
+                        </div>
+                    </label>
+
+                    <!-- Foto 2: Data de Validade -->
+                    <label for="input-photo-expiry" class="relative cursor-pointer group rounded-2xl border-2 border-dashed border-slate-700 hover:border-cyan-500/70 bg-slate-900/60 h-44 flex flex-col items-center justify-center overflow-hidden transition">
+                        <input type="file" id="input-photo-expiry" accept="image/*" capture="environment" class="hidden" onchange="handlePhotoUpload(event, 'expiry')">
+                        <img id="preview-photo-expiry" class="hidden w-full h-full object-cover" alt="Validade do Produto">
+                        <div id="placeholder-photo-expiry" class="flex flex-col items-center p-4 text-center">
+                            <div class="w-10 h-10 rounded-full bg-cyan-500/10 text-cyan-400 flex items-center justify-center mb-2 group-hover:scale-110 transition">
+                                <i class="fa-regular fa-calendar-check text-lg"></i>
+                            </div>
+                            <span class="text-xs font-bold text-white">2. Data de Validade</span>
+                            <span class="text-[10px] text-slate-400 mt-1">Verso / Tampa / Lote</span>
+                        </div>
+                    </label>
+                </div>
+
+                <!-- Botão Analisar com IA -->
+                <button id="btn-analyze-photos" onclick="analyzeProductPhotos()" disabled class="w-full py-3.5 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 disabled:opacity-40 disabled:cursor-not-allowed text-slate-950 font-black text-xs uppercase tracking-wider shadow-neon-green transition flex items-center justify-center space-x-2">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i>
+                    <span>Analisar Fotos com IA</span>
                 </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chef IA Modal (Receitas Inteligentes) -->
+    <div id="chef-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md opacity-0 pointer-events-none transition-opacity duration-300">
+        <div class="glass-panel border border-purple-500/50 rounded-3xl shadow-[0_0_25px_rgba(213,0,249,0.3)] w-full max-w-xl max-h-[85vh] flex flex-col overflow-hidden transform scale-95 transition-all duration-300">
+            <div class="px-6 py-4 border-b border-slate-800 bg-slate-900/80 flex items-center justify-between shrink-0">
+                <h3 class="text-sm font-bold text-white uppercase tracking-wider flex items-center space-x-2">
+                    <i class="fa-solid fa-hat-chef text-purple-400"></i>
+                    <span>Chef IA Anti-Desperdício</span>
+                </h3>
+                <button onclick="closeChefAIModal()" class="text-slate-400 hover:text-white p-2 rounded-xl hover:bg-slate-800 transition">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            
+            <div id="chef-ai-content" class="p-6 overflow-y-auto space-y-4 text-sm text-slate-300 leading-relaxed">
+                <!-- Conteúdo gerado pela IA entra aqui -->
             </div>
         </div>
     </div>
@@ -975,51 +1013,48 @@
         }
 
         function copyPixKey() {
-            navigator.clipboard.writeText("anicetolucasgabriel07@gmail.com");
+            const tempInput = document.createElement("input");
+            tempInput.value = "anicetolucasgabriel07@gmail.com";
+            document.body.appendChild(tempInput);
+            tempInput.select();
+            document.execCommand("copy");
+            document.body.removeChild(tempInput);
             playAudio('success');
             showToast('Chave PIX copiada para a área de transferência.', 'PIX Copiado', 'success');
         }
 
-        function requirePremium(featureName) {
-            if (isPremium) {
-                playAudio('beep');
-                showToast(`Iniciando "${featureName}"... (Recurso Pro ativado)`, 'FreshCheck Pro', 'success');
-                return;
+        // --- INTELIGÊNCIA ARTIFICIAL (GEMINI API) ---
+        const apiKey = ""; // Injetado automaticamente no ambiente
+
+        async function callGeminiWithRetry(payload, maxRetries = 4) {
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+            for (let attempt = 0; attempt < maxRetries; attempt++) {
+                try {
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                    return await response.json();
+                } catch (error) {
+                    if (attempt === maxRetries - 1) throw error;
+                    await new Promise(res => setTimeout(res, Math.pow(2, attempt) * 1000));
+                }
             }
-            playAudio('alert-warning');
-            showToast(`"${featureName}" é exclusivo. Atualize o plano!`, 'Recurso Premium', 'warning');
-            setTimeout(openUpgradeModal, 600);
         }
 
-        // Scanner Logic
-        let html5QrCode;
-        let isScanning = false;
+        // 1. Visão Computacional: Duas Fotos (Frente + Validade)
+        let photoFrontBase64 = null;
+        let photoFrontMime = null;
+        let photoExpiryBase64 = null;
+        let photoExpiryMime = null;
 
         function openScannerModal() {
             playAudio('click');
             const modal = document.getElementById('scanner-modal');
-            const modalBox = modal.querySelector('.glass-panel');
-            const loading = document.getElementById('scanner-loading');
-            
             modal.classList.remove('opacity-0', 'pointer-events-none');
-            setTimeout(() => { modalBox.classList.remove('scale-95'); modalBox.classList.add('scale-100'); }, 10);
-            loading.classList.remove('hidden');
-            
-            try {
-                html5QrCode = new Html5Qrcode("qr-reader");
-                html5QrCode.start(
-                    { facingMode: "environment" },
-                    { fps: 10, qrbox: { width: 250, height: 150 } },
-                    onScanSuccess,
-                    onScanFailure
-                );
-                isScanning = true;
-                loading.classList.add('hidden');
-                document.getElementById('scanner-laser').classList.remove('hidden');
-            } catch (err) {
-                loading.classList.add('hidden');
-                showToast('Erro ao acessar câmara. Verifique permissões.', 'Erro Óptico', 'danger');
-            }
+            setTimeout(() => { modal.querySelector('.glass-panel').classList.remove('scale-95'); modal.querySelector('.glass-panel').classList.add('scale-100'); }, 10);
         }
 
         function closeScannerModal() {
@@ -1027,45 +1062,186 @@
             const modal = document.getElementById('scanner-modal');
             modal.querySelector('.glass-panel').classList.remove('scale-100'); modal.querySelector('.glass-panel').classList.add('scale-95');
             modal.classList.add('opacity-0', 'pointer-events-none');
-            document.getElementById('scanner-laser').classList.add('hidden');
-
-            if (html5QrCode && isScanning) {
-                html5QrCode.stop().then(() => isScanning = false).catch(err => console.log(err));
-            }
         }
 
-        function onScanSuccess(decodedText, decodedResult) {
-            playAudio('success');
-            closeScannerModal();
-            showToast(`Código reconhecido: ${decodedText}`, 'Leitura Concluída', 'success');
-            
-            const barcodeText = decodedText.trim();
-            const knownProducts = {
-                '7891000100103': { name: 'Leite Condensado Moça 395g', category: 'Grãos/Sobremesas', location: 'Despensa', unit: 'un' },
-                '7894900011517': { name: 'Refrigerante Coca-Cola 2L', category: 'Bebidas', location: 'Frigorífico', unit: 'L' },
-                '7891910000197': { name: 'Açúcar Refinado União 1kg', category: 'Grãos/Sobremesas', location: 'Despensa', unit: 'kg' },
-                '7891515971524': { name: 'Iogurte Grego Tradicional Danone', category: 'Lacticínios', location: 'Frigorífico', unit: 'un' }
+        function handlePhotoUpload(event, type) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const fullDataUrl = e.target.result;
+                const base64Data = fullDataUrl.split(',')[1];
+                
+                if (type === 'front') {
+                    photoFrontBase64 = base64Data;
+                    photoFrontMime = file.type;
+                    const img = document.getElementById('preview-photo-front');
+                    img.src = fullDataUrl;
+                    img.classList.remove('hidden');
+                    document.getElementById('placeholder-photo-front').classList.add('hidden');
+                } else {
+                    photoExpiryBase64 = base64Data;
+                    photoExpiryMime = file.type;
+                    const img = document.getElementById('preview-photo-expiry');
+                    img.src = fullDataUrl;
+                    img.classList.remove('hidden');
+                    document.getElementById('placeholder-photo-expiry').classList.add('hidden');
+                }
+
+                playAudio('beep');
+                // Libera o botão se pelo menos uma foto foi enviada (idealmente as duas)
+                const btn = document.getElementById('btn-analyze-photos');
+                if (photoFrontBase64 || photoExpiryBase64) {
+                    btn.disabled = false;
+                }
             };
-
-            if (knownProducts[barcodeText]) {
-                const p = knownProducts[barcodeText];
-                document.getElementById('food-name').value = p.name;
-                document.getElementById('food-category').value = p.category;
-                document.getElementById('food-location').value = p.location;
-                document.getElementById('food-unit').value = p.unit;
-                
-                const autoDate = new Date();
-                autoDate.setDate(autoDate.getDate() + (p.category === 'Lacticínios' ? 7 : 180));
-                document.getElementById('food-expiry').value = autoDate.toISOString().split('T')[0];
-                
-                showToast(`Dados da IA aplicados para: ${p.name}`, 'Auto-preenchimento', 'info');
-            } else {
-                document.getElementById('food-name').value = `Item Genérico (${barcodeText})`;
-            }
-            document.getElementById('food-name').focus();
+            reader.readAsDataURL(file);
         }
 
-        function onScanFailure(error) { /* Ignora até achar o código */ }
+        async function analyzeProductPhotos() {
+            const btn = document.getElementById('btn-analyze-photos');
+            const originalHTML = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> <span>Lendo Embalagem e Validade...</span>`;
+            playAudio('click');
+
+            const todayStr = new Date().toISOString().split('T')[0];
+            const promptText = `Você é a visão computacional do sistema FreshCheck. Analise as imagens enviadas de um produto alimentício (a primeira mostra a frente/embalagem e a segunda mostra a data de validade, se disponível).
+Data de hoje para referência: ${todayStr}.
+Extraia e retorne ESTRITAMENTE um JSON válido com:
+- "name": Nome claro e comercial do produto em português (ex: "Leite Integral Italac 1L").
+- "category": Escolha exatamente uma destas opções: "Lacticínios", "Carnes", "Vegetais", "Frutas", "Bebidas", "Grãos/Sobremesas", "Outros".
+- "location": Melhor local de armazenamento. Escolha exatamente uma: "Frigorífico", "Congelador", "Despensa".
+- "expiryDate": Data de validade no formato exato "YYYY-MM-DD". Se a validade não estiver legível nas fotos, estime um prazo realista em dias a partir de hoje (${todayStr}) baseado no tipo de alimento.
+- "unit": Unidade de medida ("un", "kg" ou "L").`;
+
+            const parts = [{ text: promptText }];
+            if (photoFrontBase64) {
+                parts.push({ inlineData: { mimeType: photoFrontMime, data: photoFrontBase64 } });
+            }
+            if (photoExpiryBase64) {
+                parts.push({ inlineData: { mimeType: photoExpiryMime, data: photoExpiryBase64 } });
+            }
+
+            try {
+                const payload = {
+                    contents: [{ role: "user", parts: parts }],
+                    generationConfig: {
+                        responseMimeType: "application/json",
+                        responseSchema: {
+                            type: "OBJECT",
+                            properties: {
+                                name: { type: "STRING" },
+                                category: { type: "STRING" },
+                                location: { type: "STRING" },
+                                expiryDate: { type: "STRING" },
+                                unit: { type: "STRING" }
+                            },
+                            required: ["name", "category", "location", "expiryDate", "unit"]
+                        }
+                    }
+                };
+
+                const result = await callGeminiWithRetry(payload);
+                const rawJson = result?.candidates?.[0]?.content?.parts?.[0]?.text;
+                if (!rawJson) throw new Error("Resposta vazia da IA");
+
+                const detected = JSON.parse(rawJson);
+
+                // Preenche o formulário automaticamente
+                document.getElementById('food-name').value = detected.name;
+                document.getElementById('food-category').value = detected.category;
+                document.getElementById('food-location').value = detected.location;
+                document.getElementById('food-expiry').value = detected.expiryDate;
+                document.getElementById('food-unit').value = detected.unit;
+
+                playAudio('success');
+                closeScannerModal();
+                showToast(`IA identificou: ${detected.name} (Val: ${detected.expiryDate.split('-').reverse().join('/')})`, 'Leitura Concluída', 'success');
+
+                // Limpa as fotos para o próximo scan
+                resetScannerPhotos();
+            } catch (err) {
+                playAudio('alert-warning');
+                showToast('Não foi possível ler as imagens. Tente fotos mais nítidas.', 'Erro na IA', 'danger');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalHTML;
+            }
+        }
+
+        function resetScannerPhotos() {
+            photoFrontBase64 = null; photoExpiryBase64 = null;
+            document.getElementById('input-photo-front').value = '';
+            document.getElementById('input-photo-expiry').value = '';
+            document.getElementById('preview-photo-front').classList.add('hidden');
+            document.getElementById('placeholder-photo-front').classList.remove('hidden');
+            document.getElementById('preview-photo-expiry').classList.add('hidden');
+            document.getElementById('placeholder-photo-expiry').classList.remove('hidden');
+            document.getElementById('btn-analyze-photos').disabled = true;
+        }
+
+        // 2. Chef IA Funcional (Gera receitas com os itens do estoque)
+        async function openChefAIModal() {
+            if (!isPremium) {
+                playAudio('alert-warning');
+                showToast('"Chef IA Nutricional" é exclusivo. Atualize o plano ou entre com conta VIP!', 'Recurso Premium', 'warning');
+                setTimeout(openUpgradeModal, 600);
+                return;
+            }
+
+            if (foodItems.length === 0) {
+                playAudio('alert-warning');
+                showToast('Adicione alguns alimentos no seu estoque primeiro para a IA criar receitas!', 'Estoque Vazio', 'warning');
+                return;
+            }
+
+            playAudio('click');
+            const modal = document.getElementById('chef-modal');
+            const contentDiv = document.getElementById('chef-ai-content');
+            
+            modal.classList.remove('opacity-0', 'pointer-events-none');
+            setTimeout(() => { modal.querySelector('.glass-panel').classList.remove('scale-95'); modal.querySelector('.glass-panel').classList.add('scale-100'); }, 10);
+
+            contentDiv.innerHTML = `
+                <div class="flex flex-col items-center justify-center py-12 space-y-3 text-purple-400">
+                    <i class="fa-solid fa-wand-magic-sparkles fa-spin text-3xl"></i>
+                    <p class="text-xs font-mono uppercase tracking-widest">Analisando validades e criando receitas...</p>
+                </div>
+            `;
+
+            // Ordena pelos mais próximos de vencer
+            const sortedItems = [...foodItems].sort((a, b) => new Date(a.expiryDate) - new Date(b.expiryDate));
+            const inventorySummary = sortedItems.map(i => `${i.name} (${i.qty}${i.unit}, vence em ${i.expiryDate})`).join(', ');
+
+            const prompt = `Você é o Chef IA do aplicativo FreshCheck, especialista em aproveitamento integral de alimentos e combate ao desperdício.
+Aqui está o estoque atual do usuário (ordenado do mais urgente para vencer): ${inventorySummary}.
+
+Crie 2 receitas práticas, deliciosas e criativas priorizando os ingredientes que vencem primeiro.
+Formate sua resposta usando HTML limpo com classes Tailwind CSS (fundo escuro #0F172A, textos em slate-200, títulos em emerald-400 ou purple-400, bordas sutis). Não use blocos markdown (\`\`\`html), retorne apenas as tags HTML diretas.`;
+
+            try {
+                const payload = {
+                    contents: [{ role: "user", parts: [{ text: prompt }] }]
+                };
+                const result = await callGeminiWithRetry(payload);
+                let replyHtml = result?.candidates?.[0]?.content?.parts?.[0]?.text || "<p>Não foi possível gerar receitas agora.</p>";
+                replyHtml = replyHtml.replace(/```html/g, '').replace(/```/g, '');
+                
+                playAudio('success');
+                contentDiv.innerHTML = replyHtml;
+            } catch (err) {
+                contentDiv.innerHTML = `<div class="p-4 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-xs">Erro ao conectar com o Chef IA. Tente novamente em alguns segundos.</div>`;
+            }
+        }
+
+        function closeChefAIModal() {
+            playAudio('click');
+            const modal = document.getElementById('chef-modal');
+            modal.querySelector('.glass-panel').classList.remove('scale-100'); modal.querySelector('.glass-panel').classList.add('scale-95');
+            modal.classList.add('opacity-0', 'pointer-events-none');
+        }
 
         document.addEventListener('DOMContentLoaded', loadData);
     </script>
