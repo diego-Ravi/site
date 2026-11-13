@@ -116,6 +116,10 @@
                 <button onclick="toggleSound()" class="w-9 h-9 rounded-lg glass-panel flex items-center justify-center text-slate-400 hover:text-white hover:border-emerald-500/50 transition">
                     <i id="sound-icon" class="fa-solid fa-volume-high text-sm"></i>
                 </button>
+                <button id="auth-btn" onclick="openLoginModal()" class="flex items-center space-x-2 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 transition">
+                    <i class="fa-solid fa-right-to-bracket text-slate-400"></i>
+                    <span class="text-xs font-semibold text-slate-300 hidden md:inline">Entrar</span>
+                </button>
                 <button onclick="openUpgradeModal()" class="flex items-center space-x-2 px-3 py-1.5 rounded-lg bg-gradient-to-r from-amber-500/20 to-orange-500/20 border border-amber-500/50 text-amber-400 hover:bg-amber-500/30 transition shadow-neon-warning">
                     <i class="fa-solid fa-crown text-xs"></i>
                     <span class="text-xs font-bold uppercase tracking-wider">Premium</span>
@@ -336,6 +340,39 @@
         </div>
     </div>
 
+    <!-- Login Modal -->
+    <div id="login-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-300">
+        <div class="glass-panel border border-cyan-500/50 rounded-3xl shadow-neon-teal w-full max-w-sm mx-4 overflow-hidden transform scale-95 transition-all duration-300">
+            <div class="px-6 py-4 border-b border-slate-800 bg-slate-900/80 flex items-center justify-between">
+                <h3 class="text-sm font-bold text-white uppercase tracking-wider flex items-center space-x-2">
+                    <i class="fa-solid fa-user text-cyan-400"></i>
+                    <span>Sua Conta</span>
+                </h3>
+                <button onclick="closeLoginModal()" class="text-slate-400 hover:text-white p-2 rounded-xl hover:bg-slate-800 transition">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <div class="p-6">
+                <form id="login-form" class="space-y-4">
+                    <div class="space-y-1">
+                        <label class="text-[10px] text-slate-400 uppercase tracking-widest font-semibold">E-mail</label>
+                        <input type="email" id="login-email" required placeholder="nome@email.com" class="glass-input w-full px-4 py-3 rounded-xl text-sm placeholder-slate-600">
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-[10px] text-slate-400 uppercase tracking-widest font-semibold">Senha</label>
+                        <input type="password" id="login-password" required placeholder="••••••••" class="glass-input w-full px-4 py-3 rounded-xl text-sm placeholder-slate-600">
+                    </div>
+                    <button type="submit" class="w-full py-3 bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-400 hover:to-blue-400 text-slate-950 font-bold text-sm rounded-xl shadow-neon-teal transition mt-2">
+                        Entrar no Sistema
+                    </button>
+                </form>
+                <p class="text-[10px] text-slate-500 text-center mt-4 border-t border-slate-800 pt-3">
+                    <i class="fa-solid fa-shield-halved text-cyan-500 mr-1"></i> Contas institucionais possuem liberação automática do plano Pro.
+                </p>
+            </div>
+        </div>
+    </div>
+
     <!-- Tela de Pagamento PIX (Checkout) -->
     <div id="pix-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-md opacity-0 pointer-events-none transition-opacity duration-300">
         <div class="glass-panel border border-emerald-500/50 rounded-3xl shadow-neon-green w-full max-w-sm mx-4 overflow-hidden transform scale-95 transition-all duration-300 text-center">
@@ -375,10 +412,10 @@
                         <span>Copiar Chave PIX</span>
                     </button>
                     
-                    <button id="btn-simulate-payment" onclick="simulatePaymentSuccess()" class="w-full py-2.5 bg-slate-800 hover:bg-slate-700 text-emerald-400 border border-emerald-500/30 font-bold text-xs rounded-xl transition flex items-center justify-center space-x-2">
-                        <i class="fa-solid fa-check-circle"></i>
-                        <span>Simular Pagamento Realizado (Teste)</span>
-                    </button>
+                    <div class="w-full py-2.5 bg-slate-800 text-slate-400 border border-slate-700 font-semibold text-[10px] rounded-xl flex items-center justify-center space-x-2 text-center px-4">
+                        <i class="fa-solid fa-clock-rotate-left"></i>
+                        <span>Aguardando confirmação do banco...</span>
+                    </div>
                 </div>
 
                 <p class="text-[10px] text-slate-500">Após o pagamento, o seu plano será ativado automaticamente.</p>
@@ -490,14 +527,26 @@
         let myChart = null;
         let soundEnabled = true;
         let isPremium = false; 
+        let currentUser = null;
+        const VIP_EMAILS = [
+            'lucas.2025119@aluno.pedreira.org', 
+            'diego.2024051@aluno.pedreira.org'
+        ];
 
         function loadData() {
             try {
                 const stored = localStorage.getItem(STORAGE_KEY);
                 foodItems = stored ? JSON.parse(stored) : [];
-                isPremium = localStorage.getItem('freshcheck_premium') === 'true';
+                
+                currentUser = localStorage.getItem('freshcheck_user');
+                if (currentUser && VIP_EMAILS.includes(currentUser.toLowerCase())) {
+                    isPremium = true;
+                } else {
+                    isPremium = localStorage.getItem('freshcheck_premium') === 'true';
+                }
             } catch (e) { foodItems = []; }
             
+            updateAuthUI();
             updatePremiumUI();
             renderInventory();
             checkExpirationsForPush();
@@ -523,6 +572,69 @@
                     upgBtnSpan.parentElement.classList.replace('shadow-neon-warning', 'shadow-neon-teal');
                 }
             }
+        }
+
+        function updateAuthUI() {
+            const authBtn = document.getElementById('auth-btn');
+            if (!authBtn) return;
+            
+            if(currentUser) {
+                const shortName = currentUser.split('@')[0];
+                authBtn.innerHTML = `<i class="fa-solid fa-user-check text-cyan-400"></i> <span class="text-xs font-bold text-cyan-400 hidden md:inline">${shortName}</span>`;
+                authBtn.classList.replace('border-slate-700', 'border-cyan-500/50');
+                authBtn.classList.replace('bg-slate-800', 'bg-cyan-500/10');
+                authBtn.onclick = logout;
+            } else {
+                authBtn.innerHTML = `<i class="fa-solid fa-right-to-bracket text-slate-400"></i> <span class="text-xs font-semibold text-slate-300 hidden md:inline">Entrar</span>`;
+                authBtn.classList.replace('border-cyan-500/50', 'border-slate-700');
+                authBtn.classList.replace('bg-cyan-500/10', 'bg-slate-800');
+                authBtn.onclick = openLoginModal;
+            }
+        }
+
+        function openLoginModal() {
+            playAudio('click');
+            const modal = document.getElementById('login-modal');
+            modal.classList.remove('opacity-0', 'pointer-events-none');
+            setTimeout(() => { modal.querySelector('.glass-panel').classList.remove('scale-95'); modal.querySelector('.glass-panel').classList.add('scale-100'); }, 10);
+        }
+
+        function closeLoginModal() {
+            playAudio('click');
+            const modal = document.getElementById('login-modal');
+            modal.querySelector('.glass-panel').classList.remove('scale-100'); modal.querySelector('.glass-panel').classList.add('scale-95');
+            modal.classList.add('opacity-0', 'pointer-events-none');
+        }
+
+        document.getElementById('login-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const email = document.getElementById('login-email').value.toLowerCase().trim();
+            currentUser = email;
+            localStorage.setItem('freshcheck_user', email);
+            
+            if (VIP_EMAILS.includes(email)) {
+                isPremium = true;
+                localStorage.setItem('freshcheck_premium', 'true');
+                showToast('Conta Institucional! Acesso PRO Vitalício liberado gratuitamente.', 'Parceria Reconhecida', 'success');
+            } else {
+                showToast(`Bem-vindo, ${email.split('@')[0]}!`, 'Login Efetuado', 'info');
+            }
+            
+            closeLoginModal();
+            updateAuthUI();
+            updatePremiumUI();
+        });
+
+        function logout() {
+            playAudio('click');
+            localStorage.removeItem('freshcheck_user');
+            if (VIP_EMAILS.includes(currentUser)) {
+                localStorage.removeItem('freshcheck_premium');
+            }
+            currentUser = null;
+            isPremium = false;
+            showToast('Você saiu da sua conta.', 'Sessão Encerrada', 'info');
+            setTimeout(() => window.location.reload(), 1000);
         }
 
         function checkExpirationsForPush() {
@@ -779,14 +891,13 @@
         }
 
         function deleteSelected() {
-            if (confirm(`Remover ${selectedItemIds.size} ativos do sistema?`)) {
-                foodItems = foodItems.filter(item => !selectedItemIds.has(item.id));
-                selectedItemIds.clear();
-                document.getElementById('select-all').checked = false;
-                saveData();
-                playAudio('alert-warning');
-                showToast('Ativos removidos do banco de dados.', 'Exclusão Concluída', 'danger');
-            }
+            const count = selectedItemIds.size;
+            foodItems = foodItems.filter(item => !selectedItemIds.has(item.id));
+            selectedItemIds.clear();
+            document.getElementById('select-all').checked = false;
+            saveData();
+            playAudio('alert-warning');
+            showToast(`${count} ativo(s) removido(s) do banco de dados.`, 'Exclusão Concluída', 'danger');
         }
 
         document.getElementById('search-input').addEventListener('input', renderInventory);
@@ -861,22 +972,6 @@
             const modal = document.getElementById('pix-modal');
             modal.querySelector('.glass-panel').classList.remove('scale-100'); modal.querySelector('.glass-panel').classList.add('scale-95');
             modal.classList.add('opacity-0', 'pointer-events-none');
-            setTimeout(() => document.getElementById('btn-simulate-payment').innerHTML = `<i class="fa-solid fa-check-circle"></i><span>Simular Pagamento Realizado (Teste)</span>`, 300);
-        }
-
-        function simulatePaymentSuccess() {
-            playAudio('beep');
-            const btn = document.getElementById('btn-simulate-payment');
-            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i><span>A verificar API do Banco...</span>`;
-            
-            setTimeout(() => {
-                isPremium = true;
-                localStorage.setItem('freshcheck_premium', 'true');
-                closePixPayment();
-                updatePremiumUI();
-                playAudio('success');
-                showToast('Pagamento confirmado com sucesso! Todos os recursos Premium foram desbloqueados. 👑', 'FreshCheck Pro', 'success');
-            }, 1800);
         }
 
         function copyPixKey() {
